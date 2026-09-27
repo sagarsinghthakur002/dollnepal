@@ -1,0 +1,122 @@
+[
+  {
+    "id": "sakura-blossom-doll",
+    "name": "Sakura Blossom Doll",
+    "category": "Doll",
+    "price": 1450,
+    "image": "/products/sakura-blossom-doll.svg",
+    "description": "A soft-haired collectible doll in a blush pink dress, perfect for birthdays and shelf display.",
+    "trending": true,
+    "createdAt": "2026-08-01T05:00:00.000Z"
+  },
+  {
+    "id": "cuddly-bear-buddy",
+    "name": "Cuddly Bear Buddy",
+    "category": "Doll",
+    "price": 1200,
+    "image": "/products/cuddly-bear-buddy.svg",
+    "description": "Extra-soft plush teddy bear, a cuddly companion for kids and doll lovers alike.",
+    "trending": false,
+    "createdAt": "2026-08-02T05:00:00.000Z"
+  },
+  {
+    "id": "princess-aanya-doll",
+    "name": "Princess Aanya Doll",
+    "category": "Doll",
+    "price": 1850,
+    "image": "/products/princess-aanya-doll.svg",
+    "description": "A royal-gown doll with hand-painted details — a favourite pick for little princesses.",
+    "trending": true,
+    "createdAt": "2026-08-03T05:00:00.000Z"
+  },
+  {
+    "id": "mini-cloud-plush-doll",
+    "name": "Mini Cloud Plush Doll",
+    "category": "Doll",
+    "price": 950,
+    "image": "/products/mini-cloud-plush-doll.svg",
+    "description": "A pocket-sized plush doll, soft as a cloud — great as a small surprise gift.",
+    "trending": false,
+    "createdAt": "2026-08-04T05:00:00.000Z"
+  },
+  {
+    "id": "forever-rose-bouquet",
+    "name": "Forever Rose Bouquet",
+    "category": "Bouquet",
+    "price": 1650,
+    "image": "/products/forever-rose-bouquet.svg",
+    "description": "A hand-tied bouquet of premium roses wrapped in signature DollNepal pink and gold.",
+    "trending": true,
+    "createdAt": "2026-08-05T05:00:00.000Z"
+  },
+  {
+    "id": "sunshine-tulip-bunch",
+    "name": "Sunshine Tulip Bunch",
+    "category": "Bouquet",
+    "price": 1350,
+    "image": "/products/sunshine-tulip-bunch.svg",
+    "description": "Bright tulips bundled with rustic kraft wrap — a cheerful pick-me-up gift.",
+    "trending": false,
+    "createdAt": "2026-08-06T05:00:00.000Z"
+  },
+  {
+    "id": "pastel-dream-bouquet",
+    "name": "Pastel Dream Bouquet",
+    "category": "Bouquet",
+    "price": 1750,
+    "image": "/products/pastel-dream-bouquet.svg",
+    "description": "A dreamy mix of pastel blooms finished with a satin ribbon bow.",
+    "trending": false,
+    "createdAt": "2026-08-07T05:00:00.000Z"
+  },
+  {
+    "id": "golden-hour-gift-box",
+    "name": "Golden Hour Gift Box",
+    "category": "Gifts",
+    "price": 2200,
+    "image": "/products/golden-hour-gift-box.svg",
+    "description": "A curated gift box with candles, a mug and a handwritten note card — pure warmth.",
+    "trending": false,
+    "createdAt": "2026-08-08T05:00:00.000Z"
+  },
+  {
+    "id": "sweetheart-chocolate-hamper",
+    "name": "Sweetheart Chocolate Hamper",
+    "category": "Gifts",
+    "price": 1100,
+    "image": "/products/sweetheart-chocolate-hamper.svg",
+    "description": "An assortment of premium chocolates in a ribboned hamper — sweet for any occasion.",
+    "trending": true,
+    "createdAt": "2026-08-09T05:00:00.000Z"
+  },
+  {
+    "id": "starlight-jewellery-set",
+    "name": "Starlight Jewellery Set",
+    "category": "Gifts",
+    "price": 2850,
+    "image": "/products/starlight-jewellery-set.svg",
+    "description": "An elegant necklace and earring set presented in a velvet gift box.",
+    "trending": false,
+    "createdAt": "2026-08-10T05:00:00.000Z"
+  },
+  {
+    "id": "love-and-bloom-combo",
+    "name": "Love & Bloom Combo",
+    "category": "Combo",
+    "price": 2999,
+    "image": "/products/love-and-bloom-combo.svg",
+    "description": "A doll and a rose bouquet together — our most-gifted combo for anniversaries.",
+    "trending": true,
+    "createdAt": "2026-08-11T05:00:00.000Z"
+  },
+  {
+    "id": "celebration-combo-box",
+    "name": "Celebration Combo Box",
+    "category": "Combo",
+    "price": 3250,
+    "image": "/products/celebration-combo-box.svg",
+    "description": "Gift hamper + fresh bouquet bundled for birthdays, graduations and big wins.",
+    "trending": false,
+    "createdAt": "2026-08-12T05:00:00.000Z"
+  }
+]

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="princess-aanya-doll">
+  <defs>
+    <linearGradient id="g-princess-aanya-doll" x1="0%" y1="0%" x2="100%" y2="100%" gradientTransform="rotate(115)">
+      <stop offset="0%" stop-color="#fb5fa4" />
+      <stop offset="55%" stop-color="#ef2f87" />
+      <stop offset="100%" stop-color="#8440e0" />
+    </linearGradient>
+  </defs>
+  <rect width="700" height="700" fill="url(#g-princess-aanya-doll)" />
+  <circle cx="120" cy="580" r="110" fill="#ffffff" opacity="0.08" />
+  <circle cx="600" cy="120" r="150" fill="#ffffff" opacity="0.08" />
+  <circle cx="350" cy="350" r="190" fill="#ffffff" opacity="0.12" />
+  <circle cx="350" cy="350" r="190" fill="none" stroke="#dfa738" stroke-width="4" opacity="0.65" />
+  <text x="350" y="380" font-size="190" text-anchor="middle" dominant-baseline="middle">👑</text>
+</svg>

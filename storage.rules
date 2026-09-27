@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Prototype simplification: this app has no public sign-up, so any signed-in
+// Firebase Auth user is assumed to be the store admin (see README). Product
+// photos are public to read (they're shown on the storefront).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

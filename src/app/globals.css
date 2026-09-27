@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
+
+  --color-brand-pink-50: #fff1f7;
+  --color-brand-pink-100: #ffe1ee;
+  --color-brand-pink-200: #ffc2dd;
+  --color-brand-pink-300: #ff96c4;
+  --color-brand-pink-400: #fb5fa4;
+  --color-brand-pink-500: #ef2f87;
+  --color-brand-pink-600: #d31b70;
+  --color-brand-pink-700: #ab1259;
+  --color-brand-pink-800: #8b1149;
+  --color-brand-pink-900: #74123f;
+
+  --color-brand-purple-50: #f5f1ff;
+  --color-brand-purple-100: #ebe2ff;
+  --color-brand-purple-200: #d7c5ff;
+  --color-brand-purple-300: #b899ff;
+  --color-brand-purple-400: #9a68f5;
+  --color-brand-purple-500: #8440e0;
+  --color-brand-purple-600: #712cc4;
+  --color-brand-purple-700: #5d229f;
+  --color-brand-purple-800: #4c1e80;
+  --color-brand-purple-900: #3f1c69;
+
+  --color-brand-gold-50: #fdf8ea;
+  --color-brand-gold-100: #faedc4;
+  --color-brand-gold-200: #f4da8c;
+  --color-brand-gold-300: #ecc158;
+  --color-brand-gold-400: #dfa738;
+  --color-brand-gold-500: #c9902b;
+  --color-brand-gold-600: #a97423;
+  --color-brand-gold-700: #895b20;
+  --color-brand-gold-800: #714b20;
+  --color-brand-gold-900: #5f3e1e;
+
+  --color-brand-cream-50: #fffdfb;
+  --color-brand-cream-100: #fff8f3;
+  --color-brand-cream-200: #fef1e8;
+  --color-brand-cream-300: #fde4d3;
+
+  --shadow-soft: 0 8px 30px -8px rgb(139 17 73 / 0.18);
+  --shadow-card: 0 4px 18px -6px rgb(139 17 73 / 0.12);
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-brand-cream-100);
+  color: #2a1220;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+.brand-gradient-text {
+  background-image: linear-gradient(100deg, var(--color-brand-pink-500), var(--color-brand-purple-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-gradient-bg {
+  background-image: linear-gradient(100deg, var(--color-brand-pink-500), var(--color-brand-purple-500));
+}
+
+::selection {
+  background: var(--color-brand-pink-200);
+  color: var(--color-brand-pink-900);
+}

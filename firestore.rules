@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// All writes (products AND orders) happen server-side via the Admin SDK in
+// Server Actions, which bypasses these rules entirely. These rules only
+// govern direct client SDK access, which this app doesn't use for writes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Orders contain customer PII (name, phone, address) — never
+    // client-readable or writable directly. All order reads/writes go
+    // through server-side Admin SDK code (order page, admin panel, track page).
+    match /orders/{orderId} {
+      allow read, write: if false;
+    }
+  }
+}

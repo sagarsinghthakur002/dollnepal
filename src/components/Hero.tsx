@@ -66,7 +66,7 @@ export default function Hero() {
           <div className="absolute inset-0 -z-10 rounded-[2.5rem] brand-gradient-bg opacity-90 blur-[2px]" />
           <div className="rounded-[2.5rem] border-4 border-white bg-white p-3 shadow-soft">
             <Image
-              src="/logo.jpg"
+              src="/roshani.jpeg"
               alt="DollNepal — cute gifts, dolls and love"
               width={480}
               height={480}

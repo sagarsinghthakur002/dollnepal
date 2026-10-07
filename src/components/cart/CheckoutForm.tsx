@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/cart/CartContext";
 import { createOrderAction } from "@/lib/actions/orders";
 import { formatNPR } from "@/lib/currency";
+import {
+  DELIVERY_REGIONS,
+  calculateShippingFee,
+  totalWeightKg,
+  type DeliveryRegion,
+} from "@/lib/shipping";
 
 export default function CheckoutForm() {
   const router = useRouter();
@@ -15,8 +21,13 @@ export default function CheckoutForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [region, setRegion] = useState<DeliveryRegion>("inside_valley");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const totalWeight = useMemo(() => totalWeightKg(items), [items]);
+  const deliveryCharge = useMemo(() => calculateShippingFee(region, totalWeight), [region, totalWeight]);
+  const grandTotal = subtotal + deliveryCharge;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,7 +35,7 @@ export default function CheckoutForm() {
     setSubmitting(true);
 
     try {
-      const result = await createOrderAction(items, { name, phone, location });
+      const result = await createOrderAction(items, { name, phone, location }, region);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -91,6 +102,35 @@ export default function CheckoutForm() {
           />
         </div>
 
+        <fieldset>
+          <legend className="mb-1 block text-xs font-semibold text-neutral-600">Delivery region</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {DELIVERY_REGIONS.map((r) => (
+              <label
+                key={r.value}
+                className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                  region === r.value
+                    ? "border-brand-pink-400 bg-brand-pink-50 font-semibold text-neutral-900"
+                    : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="delivery-region"
+                  value={r.value}
+                  checked={region === r.value}
+                  onChange={() => setRegion(r.value)}
+                  className="accent-brand-pink-500"
+                />
+                <span>
+                  {r.label}
+                  <span className="block text-xs font-normal text-neutral-500">from {formatNPR(r.baseRate)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <button
           type="submit"
           disabled={submitting}
@@ -116,9 +156,24 @@ export default function CheckoutForm() {
             </li>
           ))}
         </ul>
-        <div className="mt-4 flex justify-between border-t border-neutral-100 pt-4 text-sm font-bold text-neutral-900">
+        <div className="mt-4 space-y-2 border-t border-neutral-100 pt-4 text-sm text-neutral-600">
+          <div className="flex justify-between">
+            <span>Subtotal</span>
+            <span className="font-semibold text-neutral-900">{formatNPR(subtotal)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>
+              Delivery Charge
+              <span className="block text-xs text-neutral-400">
+                {totalWeight} kg · {DELIVERY_REGIONS.find((r) => r.value === region)?.label}
+              </span>
+            </span>
+            <span className="font-semibold text-neutral-900">{formatNPR(deliveryCharge)}</span>
+          </div>
+        </div>
+        <div className="mt-3 flex justify-between border-t border-neutral-100 pt-4 text-sm font-bold text-neutral-900">
           <span>Total</span>
-          <span>{formatNPR(subtotal)}</span>
+          <span>{formatNPR(grandTotal)}</span>
         </div>
       </aside>
     </div>

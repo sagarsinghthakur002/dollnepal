@@ -32,18 +32,18 @@ async function seedAdminUser() {
 }
 
 const PRODUCTS = [
-  { id: "sakura-blossom-doll", name: "Sakura Blossom Doll", category: "Doll", price: 1450, trending: true, description: "A soft-haired collectible doll in a blush pink dress, perfect for birthdays and shelf display." },
-  { id: "cuddly-bear-buddy", name: "Cuddly Bear Buddy", category: "Doll", price: 1200, trending: false, description: "Extra-soft plush teddy bear, a cuddly companion for kids and doll lovers alike." },
-  { id: "princess-aanya-doll", name: "Princess Aanya Doll", category: "Doll", price: 1850, trending: true, description: "A royal-gown doll with hand-painted details — a favourite pick for little princesses." },
-  { id: "mini-cloud-plush-doll", name: "Mini Cloud Plush Doll", category: "Doll", price: 950, trending: false, description: "A pocket-sized plush doll, soft as a cloud — great as a small surprise gift." },
-  { id: "forever-rose-bouquet", name: "Forever Rose Bouquet", category: "Bouquet", price: 1650, trending: true, description: "A hand-tied bouquet of premium roses wrapped in signature DollNepal pink and gold." },
-  { id: "sunshine-tulip-bunch", name: "Sunshine Tulip Bunch", category: "Bouquet", price: 1350, trending: false, description: "Bright tulips bundled with rustic kraft wrap — a cheerful pick-me-up gift." },
-  { id: "pastel-dream-bouquet", name: "Pastel Dream Bouquet", category: "Bouquet", price: 1750, trending: false, description: "A dreamy mix of pastel blooms finished with a satin ribbon bow." },
-  { id: "golden-hour-gift-box", name: "Golden Hour Gift Box", category: "Gifts", price: 2200, trending: false, description: "A curated gift box with candles, a mug and a handwritten note card — pure warmth." },
-  { id: "sweetheart-chocolate-hamper", name: "Sweetheart Chocolate Hamper", category: "Gifts", price: 1100, trending: true, description: "An assortment of premium chocolates in a ribboned hamper — sweet for any occasion." },
-  { id: "starlight-jewellery-set", name: "Starlight Jewellery Set", category: "Gifts", price: 2850, trending: false, description: "An elegant necklace and earring set presented in a velvet gift box." },
-  { id: "love-and-bloom-combo", name: "Love & Bloom Combo", category: "Combo", price: 2999, trending: true, description: "A doll and a rose bouquet together — our most-gifted combo for anniversaries." },
-  { id: "celebration-combo-box", name: "Celebration Combo Box", category: "Combo", price: 3250, trending: false, description: "Gift hamper + fresh bouquet bundled for birthdays, graduations and big wins." },
+  { id: "sakura-blossom-doll", weight: 0.6, name: "Sakura Blossom Doll", category: "Doll", price: 1450, trending: true, description: "A soft-haired collectible doll in a blush pink dress, perfect for birthdays and shelf display." },
+  { id: "cuddly-bear-buddy", weight: 0.8, name: "Cuddly Bear Buddy", category: "Doll", price: 1200, trending: false, description: "Extra-soft plush teddy bear, a cuddly companion for kids and doll lovers alike." },
+  { id: "princess-aanya-doll", weight: 0.9, name: "Princess Aanya Doll", category: "Doll", price: 1850, trending: true, description: "A royal-gown doll with hand-painted details — a favourite pick for little princesses." },
+  { id: "mini-cloud-plush-doll", weight: 0.3, name: "Mini Cloud Plush Doll", category: "Doll", price: 950, trending: false, description: "A pocket-sized plush doll, soft as a cloud — great as a small surprise gift." },
+  { id: "forever-rose-bouquet", weight: 0.7, name: "Forever Rose Bouquet", category: "Bouquet", price: 1650, trending: true, description: "A hand-tied bouquet of premium roses wrapped in signature DollNepal pink and gold." },
+  { id: "sunshine-tulip-bunch", weight: 0.6, name: "Sunshine Tulip Bunch", category: "Bouquet", price: 1350, trending: false, description: "Bright tulips bundled with rustic kraft wrap — a cheerful pick-me-up gift." },
+  { id: "pastel-dream-bouquet", weight: 0.7, name: "Pastel Dream Bouquet", category: "Bouquet", price: 1750, trending: false, description: "A dreamy mix of pastel blooms finished with a satin ribbon bow." },
+  { id: "golden-hour-gift-box", weight: 1.5, name: "Golden Hour Gift Box", category: "Gifts", price: 2200, trending: false, description: "A curated gift box with candles, a mug and a handwritten note card — pure warmth." },
+  { id: "sweetheart-chocolate-hamper", weight: 1.0, name: "Sweetheart Chocolate Hamper", category: "Gifts", price: 1100, trending: true, description: "An assortment of premium chocolates in a ribboned hamper — sweet for any occasion." },
+  { id: "starlight-jewellery-set", weight: 0.4, name: "Starlight Jewellery Set", category: "Gifts", price: 2850, trending: false, description: "An elegant necklace and earring set presented in a velvet gift box." },
+  { id: "love-and-bloom-combo", weight: 1.6, name: "Love & Bloom Combo", category: "Combo", price: 2999, trending: true, description: "A doll and a rose bouquet together — our most-gifted combo for anniversaries." },
+  { id: "celebration-combo-box", weight: 2.2, name: "Celebration Combo Box", category: "Combo", price: 3250, trending: false, description: "Gift hamper + fresh bouquet bundled for birthdays, graduations and big wins." },
 ];
 
 async function seedProducts() {
@@ -54,6 +54,7 @@ async function seedProducts() {
       name: p.name,
       category: p.category,
       price: p.price,
+      weight: p.weight,
       imageUrl: `/products/${p.id}.svg`,
       imagePath: null,
       description: p.description,

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Copy, Check, BadgeCheck } from "lucide-react";
+import { upload } from "@vercel/blob/client";
+import { Copy, Check, BadgeCheck, UploadCloud, X } from "lucide-react";
 import { markPaymentSubmittedAction } from "@/lib/actions/orders";
 import type { PaymentStatus } from "@/lib/types";
 
@@ -22,6 +23,41 @@ export default function PaymentTabs({
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+
+  // Local preview of the chosen screenshot; revoke the object URL when replaced.
+  useEffect(() => {
+    if (!proofFile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(proofFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [proofFile]);
+
+  function handleProofChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    setFileError(null);
+    if (!file) return;
+    const okType = ["image/jpeg", "image/png"].includes(file.type) || /\.(jpe?g|png)$/i.test(file.name);
+    if (!okType) {
+      setFileError("Please choose a .jpg, .jpeg or .png image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError("Image is too large (max 5 MB).");
+      return;
+    }
+    setProofFile(file);
+    setConfirming(false);
+  }
 
   function copyId(value: string) {
     navigator.clipboard?.writeText(value).catch(() => {});
@@ -30,12 +66,29 @@ export default function PaymentTabs({
   }
 
   async function handleConfirmPaid() {
+    if (!proofFile) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await markPaymentSubmittedAction(orderId, tab);
+      const safeName = proofFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const blob = await upload(`payment-proofs/${orderId}/${Date.now()}-${safeName}`, proofFile, {
+        access: "public",
+        handleUploadUrl: "/api/upload-proof",
+        clientPayload: orderId,
+        contentType: proofFile.type || undefined,
+        onUploadProgress: (p) => setProgress(Math.round(p.percentage)),
+      });
+      const result = await markPaymentSubmittedAction(orderId, tab, blob.url);
+      if (!result.ok) {
+        setSubmitError(result.error);
+        return;
+      }
       router.refresh();
+    } catch {
+      setSubmitError("Upload failed. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
+      setProgress(null);
       setConfirming(false);
     }
   }
@@ -108,15 +161,53 @@ export default function PaymentTabs({
         </button>
 
         <p className="mt-3 max-w-xs text-xs text-neutral-500">
-          Scan the QR code or send payment to the ID above, then tap &quot;I Have Paid&quot; below.
+          Scan the QR code or send payment to the ID above, then upload your payment screenshot and tap &quot;I Have Paid&quot;.
         </p>
+
+        <div className="mt-5 w-full text-left">
+          <span className="mb-1 block text-xs font-semibold text-neutral-600">Upload Payment Screenshot / Proof</span>
+          {previewUrl ? (
+            <div className="relative rounded-2xl bg-neutral-50 p-3 ring-1 ring-neutral-200">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview */}
+              <img src={previewUrl} alt="Payment screenshot preview" className="mx-auto max-h-64 rounded-xl object-contain" />
+              <p className="mt-2 truncate text-center text-xs text-neutral-500">{proofFile?.name}</p>
+              <button
+                type="button"
+                onClick={() => { setProofFile(null); setConfirming(false); }}
+                disabled={submitting}
+                aria-label="Remove screenshot"
+                className="absolute right-2 top-2 rounded-full bg-white p-1.5 text-neutral-600 shadow hover:text-red-600 disabled:opacity-50"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 px-4 py-6 text-center text-sm font-semibold text-neutral-600 hover:border-brand-pink-400">
+              <UploadCloud size={22} />
+              Upload Payment Screenshot / Proof
+              <span className="text-xs font-normal text-neutral-400">.jpg, .jpeg or .png · max 5 MB</span>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                onChange={handleProofChange}
+                className="hidden"
+              />
+            </label>
+          )}
+          {fileError && <p className="mt-1 text-xs text-red-600">{fileError}</p>}
+        </div>
 
         {confirming ? (
           <div className="mt-5 w-full rounded-2xl bg-brand-cream-100 p-4">
             <p className="text-sm text-neutral-700">
               Confirm you&apos;ve sent the payment via <strong>{tab === "esewa" ? "eSewa" : "Fonpay"}</strong>?
-              We&apos;ll mark your order as awaiting verification and reach out on WhatsApp shortly.
+              We&apos;ll save your screenshot with the order, mark it as awaiting verification and reach out on WhatsApp shortly.
             </p>
+            {progress !== null && (
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full brand-gradient-bg transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            )}
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
@@ -124,7 +215,7 @@ export default function PaymentTabs({
                 disabled={submitting}
                 className="flex-1 rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {submitting ? "Submitting…" : "Yes, I've paid"}
+                {submitting ? "Uploading & submitting…" : "Yes, I've paid"}
               </button>
               <button
                 type="button"
@@ -140,11 +231,16 @@ export default function PaymentTabs({
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
+            disabled={!proofFile}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
           >
             I Have Paid
           </button>
         )}
+        {!proofFile && !confirming && (
+          <p className="mt-2 text-xs text-neutral-400">Upload your screenshot to enable this button.</p>
+        )}
+        {submitError && <p className="mt-2 text-xs text-red-600">{submitError}</p>}
       </div>
     </div>
   );

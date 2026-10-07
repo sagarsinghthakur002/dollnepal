@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { updateOrderStatusAction } from "@/lib/actions/orders";
 import { formatNPR } from "@/lib/currency";
+import { regionLabel } from "@/lib/shipping";
 import type { Order, PaymentStatus, ShippingStatus } from "@/lib/types";
 
 const PAYMENT_STATUSES: PaymentStatus[] = ["unpaid", "pending_verification", "paid", "refunded"];
@@ -110,6 +111,16 @@ function OrderDetail({ order }: { order: Order }) {
           <p className="text-sm text-neutral-700">{order.customer.phone}</p>
           <p className="text-sm text-neutral-700">{order.customer.location}</p>
 
+          {order.paymentProofUrl && (
+            <>
+              <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">Payment proof</h3>
+              <a href={order.paymentProofUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary customer-uploaded blob */}
+                <img src={order.paymentProofUrl} alt="Payment screenshot" className="max-h-48 rounded-xl ring-1 ring-black/10" />
+              </a>
+            </>
+          )}
+
           <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">Items</h3>
           <ul className="mt-2 space-y-1 text-sm text-neutral-700">
             {order.items.map((item) => (
@@ -119,7 +130,11 @@ function OrderDetail({ order }: { order: Order }) {
               </li>
             ))}
           </ul>
-          <p className="mt-2 flex justify-between border-t border-neutral-200 pt-2 text-sm font-bold text-neutral-900">
+          <p className="mt-2 flex justify-between border-t border-neutral-200 pt-2 text-sm text-neutral-600">
+            <span>Delivery ({regionLabel(order.deliveryRegion)}, {order.totalWeight} kg)</span>
+            <span className="font-medium">{formatNPR(order.deliveryCharge)}</span>
+          </p>
+          <p className="mt-1 flex justify-between text-sm font-bold text-neutral-900">
             <span>Total</span>
             <span>{formatNPR(order.total)}</span>
           </p>

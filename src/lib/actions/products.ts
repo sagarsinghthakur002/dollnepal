@@ -13,6 +13,7 @@ export interface ProductInput {
   name: string;
   category: string;
   price: number;
+  weight: number;
   imageUrl: string;
   imagePath: string | null;
   description: string;
@@ -34,6 +35,9 @@ function validate(input: ProductInput) {
   }
   if (!Number.isFinite(input.price) || input.price < 0) {
     throw new Error("Price must be a non-negative number.");
+  }
+  if (!Number.isFinite(input.weight) || input.weight <= 0 || input.weight > 1000) {
+    throw new Error("Weight must be a number greater than 0 (in kg).");
   }
   if (!input.imageUrl?.trim()) throw new Error("A product image is required.");
 }
@@ -67,6 +71,7 @@ export async function createProductAction(
         name: input.name.trim(),
         category: input.category,
         price: input.price,
+        weight: input.weight,
         imageUrl: input.imageUrl,
         imagePath: input.imagePath,
         description: input.description?.trim() ?? "",
@@ -99,6 +104,7 @@ export async function updateProductAction(
       name: input.name.trim(),
       category: input.category,
       price: input.price,
+      weight: input.weight,
       imageUrl: input.imageUrl,
       imagePath: input.imagePath,
       description: input.description?.trim() ?? "",

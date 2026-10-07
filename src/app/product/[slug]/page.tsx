@@ -1,3 +1,4 @@
+import { descriptionLines, descriptionPlain } from "@/lib/description";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: product.name,
-    description: product.description || `${product.name} — ${product.category} available at DollNepal, Nepal.`,
+    description: descriptionPlain(product.description) || `${product.name} — ${product.category} available at DollNepal, Nepal.`,
     openGraph: { images: [product.imageUrl] },
   };
 }
@@ -35,7 +36,7 @@ export default async function ProductDetailPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description,
+    description: descriptionPlain(product.description),
     image: product.imageUrl,
     category: product.category,
     offers: {
@@ -81,7 +82,15 @@ export default async function ProductDetailPage({ params }: Props) {
             <p className="mt-3 text-2xl font-bold text-brand-pink-600">{formatNPR(product.price)}</p>
 
             {product.description && (
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600">{product.description}</p>
+              descriptionLines(product.description).length > 1 ? (
+                <ul className="mt-5 max-w-md list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-neutral-600 marker:text-brand-pink-500">
+                  {descriptionLines(product.description).map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600">{descriptionLines(product.description)[0]}</p>
+              )
             )}
 
             <ProductDetailActions product={product} />

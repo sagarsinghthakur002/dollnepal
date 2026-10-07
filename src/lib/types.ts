@@ -5,6 +5,7 @@ export interface Product {
   name: string;
   category: ProductCategory;
   price: number; // NPR
+  weight: number; // kg
   imageUrl: string;
   imagePath: string | null; // Vercel Blob URL (same as imageUrl), null for seed/local images
   description: string;
@@ -16,6 +17,7 @@ export interface CartItem {
   productId: string;
   name: string;
   price: number;
+  weight?: number; // kg per unit (absent on carts saved before weights existed)
   image: string;
   qty: number;
 }
@@ -24,6 +26,7 @@ export interface OrderItem {
   productId: string;
   name: string;
   price: number;
+  weight: number;
   image: string;
   qty: number;
   lineTotal: number;
@@ -56,7 +59,12 @@ export interface Order {
   customer: OrderCustomer;
   items: OrderItem[];
   subtotal: number;
-  total: number;
+  deliveryRegion: "inside_valley" | "outside_valley";
+  totalWeight: number; // kg
+  deliveryCharge: number;
+  total: number; // subtotal + deliveryCharge
+  paymentProofUrl: string | null;
+  paymentProofUploadedAt: string | null;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   shippingStatus: ShippingStatus;

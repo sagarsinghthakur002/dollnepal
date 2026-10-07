@@ -81,7 +81,7 @@ export default function CartView() {
           <span>Subtotal</span>
           <span className="font-semibold text-neutral-900">{formatNPR(subtotal)}</span>
         </div>
-        <p className="mt-1 text-xs text-neutral-400">Delivery fee confirmed on WhatsApp after checkout.</p>
+        <p className="mt-1 text-xs text-neutral-400">Delivery charge is calculated at checkout based on weight and region.</p>
 
         <Link
           href="/checkout"

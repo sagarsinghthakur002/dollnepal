@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatNPR } from "@/lib/currency";
+import { regionLabel } from "@/lib/shipping";
 import type { Order } from "@/lib/types";
 
 export function generateInvoicePdf(order: Order): void {
@@ -27,6 +28,7 @@ export function generateInvoicePdf(order: Order): void {
     `Customer: ${order.customer.name}`,
     `Phone: ${order.customer.phone}`,
     `Delivery Location: ${order.customer.location}`,
+    `Delivery Region: ${regionLabel(order.deliveryRegion)}`,
   ];
   infoLines.forEach((line, i) => doc.text(line, 40, 134 + i * 16));
 
@@ -47,16 +49,21 @@ export function generateInvoicePdf(order: Order): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jspdf-autotable augments the doc instance at runtime
   const finalY = (doc as any).lastAutoTable?.finalY ?? 300;
 
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text(`Subtotal: ${formatNPR(order.subtotal)}`, 40, finalY + 24);
+  doc.text(`Delivery Charge (${order.totalWeight} kg): ${formatNPR(order.deliveryCharge)}`, 40, finalY + 40);
+
   doc.setFontSize(12);
   doc.setTextColor(20, 20, 20);
-  doc.text(`Total Payable: ${formatNPR(order.total)}`, 40, finalY + 30);
+  doc.text(`Total Payable: ${formatNPR(order.total)}`, 40, finalY + 62);
 
   doc.setFontSize(9);
   doc.setTextColor(130, 130, 130);
   doc.text(
     "Thank you for shopping with DollNepal! This invoice confirms your order details for payment verification.",
     40,
-    finalY + 60,
+    finalY + 92,
     { maxWidth: 500 }
   );
 

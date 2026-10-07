@@ -7,6 +7,7 @@ import PaymentTabs from "@/components/order/PaymentTabs";
 import WhatsAppInvoiceButton from "@/components/order/WhatsAppInvoiceButton";
 import { formatNPR } from "@/lib/currency";
 import { getOrderById } from "@/lib/data/orders";
+import { regionLabel } from "@/lib/shipping";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,14 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                 </li>
               ))}
             </ul>
-            <p className="mt-4 flex justify-between border-t border-neutral-100 pt-4 font-display text-lg font-semibold text-neutral-900">
+            <div className="mt-4 space-y-1.5 border-t border-neutral-100 pt-4 text-sm text-neutral-600">
+              <p className="flex justify-between"><span>Subtotal</span><span>{formatNPR(order.subtotal)}</span></p>
+              <p className="flex justify-between">
+                <span>Delivery Charge <span className="text-xs text-neutral-400">({regionLabel(order.deliveryRegion)}, {order.totalWeight} kg)</span></span>
+                <span>{formatNPR(order.deliveryCharge)}</span>
+              </p>
+            </div>
+            <p className="mt-3 flex justify-between border-t border-neutral-100 pt-4 font-display text-lg font-semibold text-neutral-900">
               <span>Total Payable</span>
               <span>{formatNPR(order.total)}</span>
             </p>
@@ -64,6 +72,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-neutral-500">Name</dt><dd className="text-neutral-800">{order.customer.name}</dd></div>
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-neutral-500">Phone</dt><dd className="text-neutral-800">{order.customer.phone}</dd></div>
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-neutral-500">Location</dt><dd className="text-neutral-800">{order.customer.location}</dd></div>
+              <div className="flex gap-2"><dt className="w-24 shrink-0 text-neutral-500">Region</dt><dd className="text-neutral-800">{regionLabel(order.deliveryRegion)}</dd></div>
             </dl>
           </aside>
 

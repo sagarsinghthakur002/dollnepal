@@ -5,17 +5,21 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { generateOrderId } from "@/lib/orderId";
+import { calculateShippingFee, isDeliveryRegion, totalWeightKg, type DeliveryRegion } from "@/lib/shipping";
 import type { CartItem, OrderCustomer, PaymentStatus, ShippingStatus } from "@/lib/types";
 
 export async function createOrderAction(
   cartItems: CartItem[],
-  customer: OrderCustomer
+  customer: OrderCustomer,
+  deliveryRegion: DeliveryRegion
 ): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
   try {
     if (!cartItems.length) throw new Error("Your cart is empty.");
     if (!customer.name?.trim() || !customer.phone?.trim() || !customer.location?.trim()) {
       throw new Error("Name, phone and delivery location are required.");
     }
+
+    if (!isDeliveryRegion(deliveryRegion)) throw new Error("Please select a delivery region.");
 
     // Re-derive item prices/names from Firestore rather than trusting the
     // client, so a tampered cart can't under-charge an order.
@@ -29,6 +33,7 @@ export async function createOrderAction(
           productId: item.productId,
           name: data.name as string,
           price: data.price as number,
+          weight: typeof data.weight === "number" ? data.weight : 0,
           image: data.imageUrl as string,
           qty,
           lineTotal: (data.price as number) * qty,
@@ -37,6 +42,9 @@ export async function createOrderAction(
     );
 
     const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    // Shipping is always computed server-side from Firestore weights.
+    const totalWeight = totalWeightKg(items);
+    const deliveryCharge = calculateShippingFee(deliveryRegion, totalWeight);
     const orderId = generateOrderId();
 
     await adminDb
@@ -50,7 +58,12 @@ export async function createOrderAction(
         },
         items,
         subtotal,
-        total: subtotal,
+        deliveryRegion,
+        totalWeight,
+        deliveryCharge,
+        total: subtotal + deliveryCharge,
+        paymentProofUrl: null,
+        paymentProofUploadedAt: null,
         paymentStatus: "unpaid" satisfies PaymentStatus,
         paymentMethod: null,
         shippingStatus: "processing" satisfies ShippingStatus,
@@ -68,16 +81,33 @@ export async function createOrderAction(
 
 export async function markPaymentSubmittedAction(
   orderId: string,
-  paymentMethod: "esewa" | "fonpay"
+  paymentMethod: "esewa" | "fonpay",
+  paymentProofUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const ref = adminDb.collection("orders").doc(orderId);
     const existing = await ref.get();
     if (!existing.exists) throw new Error("Order not found.");
+    if (existing.data()?.paymentStatus === "paid") throw new Error("This order is already paid.");
+
+    // The proof must be a blob uploaded for this order via /api/upload-proof.
+    let proofOk = false;
+    try {
+      const u = new URL(paymentProofUrl);
+      proofOk =
+        u.protocol === "https:" &&
+        u.hostname.endsWith(".public.blob.vercel-storage.com") &&
+        decodeURIComponent(u.pathname).startsWith(`/payment-proofs/${orderId}/`);
+    } catch {
+      proofOk = false;
+    }
+    if (!proofOk) throw new Error("Please upload your payment screenshot before submitting.");
 
     await ref.update({
       paymentStatus: "pending_verification" satisfies PaymentStatus,
       paymentMethod,
+      paymentProofUrl,
+      paymentProofUploadedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
 

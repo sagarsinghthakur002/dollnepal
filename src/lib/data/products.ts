@@ -11,6 +11,7 @@ function toProduct(doc: QueryDocumentSnapshot): Product {
     name: data.name,
     category: data.category,
     price: data.price,
+    weight: typeof data.weight === "number" ? data.weight : 0,
     imageUrl: data.imageUrl,
     imagePath: data.imagePath ?? null,
     description: data.description ?? "",

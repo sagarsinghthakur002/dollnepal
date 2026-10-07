@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { UploadCloud, ImagePlus } from "lucide-react";
+import { UploadCloud, ImagePlus, List } from "lucide-react";
+import { descriptionToEditorText, editorTextToDescription } from "@/lib/description";
 import type { Product, ProductCategory } from "@/lib/types";
 import type { ProductInput } from "@/lib/actions/products";
 
@@ -26,7 +27,13 @@ export default function ProductForm({
   const [name, setName] = useState(initialProduct?.name ?? "");
   const [category, setCategory] = useState<string>(initialProduct?.category ?? "Doll");
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.price) : "");
-  const [description, setDescription] = useState(initialProduct?.description ?? "");
+  const [weight, setWeight] = useState(
+    initialProduct && initialProduct.weight > 0 ? String(initialProduct.weight) : ""
+  );
+  const [description, setDescription] = useState(
+    descriptionToEditorText(initialProduct?.description ?? "")
+  );
+  const descRef = useRef<HTMLTextAreaElement>(null);
   const [trending, setTrending] = useState(Boolean(initialProduct?.trending));
 
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl ?? "");
@@ -63,12 +70,72 @@ export default function ProductForm({
     }
   }
 
+  // --- Bullet-point editor helpers -----------------------------------------
+  function setDescWithCursor(value: string, cursor: number) {
+    setDescription(value);
+    requestAnimationFrame(() => {
+      descRef.current?.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  function handleDescKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    e.preventDefault();
+    const el = e.currentTarget;
+    const { selectionStart: start, selectionEnd: end, value } = el;
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const currentLine = value.slice(lineStart, start);
+
+    // Enter on an empty bullet ends the list (removes the dangling "• ").
+    if (currentLine.trim() === "•") {
+      const next = value.slice(0, lineStart) + value.slice(end);
+      setDescWithCursor(next, lineStart);
+      return;
+    }
+    const insert = "\n• ";
+    setDescWithCursor(value.slice(0, start) + insert + value.slice(end), start + insert.length);
+  }
+
+  function handleDescFocus() {
+    if (!description.trim()) setDescWithCursor("• ", 2);
+  }
+
+  function handleDescChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    // Make sure every non-empty line keeps its bullet (covers pasted plain text).
+    const value = e.target.value
+      .split("\n")
+      .map((line) => (line.trim() && !/^\s*•/.test(line) ? `• ${line.replace(/^\s*[-*·]\s*/, "")}` : line))
+      .join("\n");
+    setDescription(value);
+  }
+
+  function insertBullet() {
+    const el = descRef.current;
+    const value = description;
+    const pos = el?.selectionStart ?? value.length;
+    const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+    const lineEnd = value.indexOf("\n", pos) === -1 ? value.length : value.indexOf("\n", pos);
+    const line = value.slice(lineStart, lineEnd);
+    if (line.trim() === "") {
+      setDescWithCursor(value.slice(0, lineStart) + "• " + value.slice(lineEnd), lineStart + 2);
+    } else {
+      const prefix = value && !value.endsWith("\n") ? "\n" : "";
+      setDescWithCursor(value + prefix + "• ", (value + prefix + "• ").length);
+    }
+    el?.focus();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!name.trim() || !imageUrl || price === "") {
       setError("Please fill in name, price and upload an image.");
+      return;
+    }
+    const weightNum = Number(weight);
+    if (weight === "" || !Number.isFinite(weightNum) || weightNum <= 0) {
+      setError("Please enter the product weight in kg (greater than 0).");
       return;
     }
 
@@ -78,9 +145,10 @@ export default function ProductForm({
         name,
         category,
         price: Number(price),
+        weight: weightNum,
         imageUrl,
         imagePath,
-        description,
+        description: editorTextToDescription(description),
         trending,
       });
       if (!result.ok) {
@@ -111,7 +179,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div>
         <div>
           <label htmlFor="pf-category" className="mb-1 block text-xs font-semibold text-neutral-600">
             Category
@@ -127,6 +195,9 @@ export default function ProductForm({
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="pf-price" className="mb-1 block text-xs font-semibold text-neutral-600">
             Price (NPR)
@@ -139,6 +210,23 @@ export default function ProductForm({
             onChange={(e) => setPrice(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm focus:border-brand-pink-400 focus:outline-none"
             placeholder="1500"
+          />
+        </div>
+        <div>
+          <label htmlFor="pf-weight" className="mb-1 block text-xs font-semibold text-neutral-600">
+            Weight (in kg)
+          </label>
+          <input
+            id="pf-weight"
+            type="number"
+            min="0.01"
+            step="0.01"
+            inputMode="decimal"
+            required
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm focus:border-brand-pink-400 focus:outline-none"
+            placeholder="0.5"
           />
         </div>
       </div>
@@ -172,17 +260,30 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label htmlFor="pf-description" className="mb-1 block text-xs font-semibold text-neutral-600">
-          Description
-        </label>
+        <div className="mb-1 flex items-center justify-between">
+          <label htmlFor="pf-description" className="block text-xs font-semibold text-neutral-600">
+            Description <span className="font-normal text-neutral-400">(one bullet per line)</span>
+          </label>
+          <button
+            type="button"
+            onClick={insertBullet}
+            className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-200"
+          >
+            <List size={13} /> Add bullet
+          </button>
+        </div>
         <textarea
           id="pf-description"
-          rows={3}
+          ref={descRef}
+          rows={6}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm focus:border-brand-pink-400 focus:outline-none"
-          placeholder="Short, playful product description"
+          onFocus={handleDescFocus}
+          onChange={handleDescChange}
+          onKeyDown={handleDescKeyDown}
+          className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm leading-relaxed focus:border-brand-pink-400 focus:outline-none"
+          placeholder={"• Handmade soft-fabric doll\n• 30 cm tall\n• Comes in a gift box"}
         />
+        <p className="mt-1 text-xs text-neutral-400">Press Enter for a new bullet; Enter on an empty bullet ends the list.</p>
       </div>
 
       <label className="flex items-center gap-3">

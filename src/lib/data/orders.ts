@@ -20,6 +20,7 @@ function toOrder(doc: QueryDocumentSnapshot): Order {
     paymentStatus: data.paymentStatus,
     paymentMethod: data.paymentMethod ?? null,
     shippingStatus: data.shippingStatus,
+    courier: data.courier === "ncm" || data.courier === "upaya" ? data.courier : null,
     ncmTrackingId: data.ncmTrackingId ?? null,
     createdAt: data.createdAt?.toDate?.().toISOString() ?? new Date(0).toISOString(),
     updatedAt: data.updatedAt?.toDate?.().toISOString() ?? new Date(0).toISOString(),

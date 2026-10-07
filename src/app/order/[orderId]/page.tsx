@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import CourierTracking from "@/components/track/CourierTracking";
 import PaymentTabs from "@/components/order/PaymentTabs";
 import WhatsAppInvoiceButton from "@/components/order/WhatsAppInvoiceButton";
 import { formatNPR } from "@/lib/currency";
@@ -75,6 +76,13 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-neutral-500">Region</dt><dd className="text-neutral-800">{regionLabel(order.deliveryRegion)}</dd></div>
             </dl>
           </aside>
+
+          {(order.courier || order.ncmTrackingId) && (
+            <aside className="rounded-3xl bg-white p-4 shadow-card ring-1 ring-black/5 sm:p-8">
+              <h2 className="mb-4 font-display text-lg font-semibold text-neutral-900">Shipment tracking</h2>
+              <CourierTracking courier={order.courier} trackingId={order.ncmTrackingId} />
+            </aside>
+          )}
 
           <WhatsAppInvoiceButton order={order} orderUrl={orderUrl} />
         </div>

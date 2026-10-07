@@ -85,7 +85,8 @@ export async function getTrackingSteps(order: Order): Promise<{
   let effectiveStatus: ShippingStatus = order.shippingStatus;
   let isLive = false;
 
-  if (order.ncmTrackingId) {
+  // Live API lookup only applies to NCM shipments (legacy orders without a courier count as NCM).
+  if (order.ncmTrackingId && (order.courier === "ncm" || order.courier === null)) {
     const liveStatus = await fetchNcmStatus(order.ncmTrackingId);
     if (liveStatus) {
       effectiveStatus = liveStatus;
@@ -107,6 +108,8 @@ export async function getTrackingSteps(order: Order): Promise<{
     };
   }
 
+  const courierName = order.courier === "upaya" ? "Upaya" : "NCM";
+  const courierFull = order.courier === "upaya" ? "Upaya Services" : "Nepal Can Move";
   const currentIndex = STEP_ORDER.indexOf(effectiveStatus);
 
   return {
@@ -114,6 +117,9 @@ export async function getTrackingSteps(order: Order): Promise<{
     steps: STEP_ORDER.map((key, index) => ({
       key,
       ...STEP_LABELS[key],
+      ...(key === "in_transit"
+        ? { label: `In Transit via ${courierName}`, description: `On its way with ${courierFull} to your city.` }
+        : {}),
       done: index <= currentIndex,
       current: index === currentIndex,
     })),

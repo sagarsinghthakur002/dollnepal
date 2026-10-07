@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Info } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { createOrderAction } from "@/lib/actions/orders";
 import { formatNPR } from "@/lib/currency";
@@ -13,6 +14,9 @@ import {
   totalWeightKg,
   type DeliveryRegion,
 } from "@/lib/shipping";
+
+const DELIVERY_NOTE =
+  "Note: Base delivery rate applies for total order weight up to 2 kg. An additional base rate charge is added for every extra 1 kg over 2 kg.";
 
 export default function CheckoutForm() {
   const router = useRouter();
@@ -59,8 +63,8 @@ export default function CheckoutForm() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 lg:col-span-2 sm:p-8">
+    <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-4 shadow-card ring-1 ring-black/5 lg:col-span-2 sm:p-8">
         {error && <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
 
         <div>
@@ -72,7 +76,7 @@ export default function CheckoutForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand-pink-400 focus:outline-none"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base sm:text-sm focus:border-brand-pink-400 focus:outline-none"
           />
         </div>
 
@@ -85,7 +89,7 @@ export default function CheckoutForm() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="98XXXXXXXX"
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand-pink-400 focus:outline-none"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base sm:text-sm focus:border-brand-pink-400 focus:outline-none"
           />
         </div>
 
@@ -98,13 +102,13 @@ export default function CheckoutForm() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="House no., street, ward, city"
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm focus:border-brand-pink-400 focus:outline-none"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base sm:text-sm focus:border-brand-pink-400 focus:outline-none"
           />
         </div>
 
         <fieldset>
           <legend className="mb-1 block text-xs font-semibold text-neutral-600">Delivery region</legend>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {DELIVERY_REGIONS.map((r) => (
               <label
                 key={r.value}
@@ -129,18 +133,22 @@ export default function CheckoutForm() {
               </label>
             ))}
           </div>
+          <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-neutral-500">
+            <Info size={14} className="mt-0.5 shrink-0 text-neutral-400" aria-hidden />
+            <span>{DELIVERY_NOTE}</span>
+          </p>
         </fieldset>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-full brand-gradient-bg px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02] disabled:opacity-60"
+          className="min-h-12 w-full rounded-full brand-gradient-bg px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02] disabled:opacity-60"
         >
           {submitting ? "Placing order…" : "Place Order"}
         </button>
       </form>
 
-      <aside className="h-fit rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5">
+      <aside className="h-fit rounded-3xl bg-white p-4 sm:p-6 shadow-card ring-1 ring-black/5">
         <h2 className="font-display text-lg font-semibold text-neutral-900">Order Summary</h2>
         <ul className="mt-4 space-y-3">
           {items.map((item) => (
@@ -149,10 +157,10 @@ export default function CheckoutForm() {
                 <Image src={item.image} alt={item.name} fill sizes="48px" className="object-cover" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-neutral-800">{item.name}</p>
+                <p className="line-clamp-2 break-words text-sm font-medium text-neutral-800">{item.name}</p>
                 <p className="text-xs text-neutral-500">Qty {item.qty}</p>
               </div>
-              <p className="text-sm font-semibold text-neutral-900">{formatNPR(item.price * item.qty)}</p>
+              <p className="shrink-0 text-sm font-semibold text-neutral-900">{formatNPR(item.price * item.qty)}</p>
             </li>
           ))}
         </ul>
@@ -170,6 +178,10 @@ export default function CheckoutForm() {
             </span>
             <span className="font-semibold text-neutral-900">{formatNPR(deliveryCharge)}</span>
           </div>
+          <p className="flex items-start gap-1.5 text-xs leading-relaxed text-neutral-400">
+            <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
+            <span>{DELIVERY_NOTE}</span>
+          </p>
         </div>
         <div className="mt-3 flex justify-between border-t border-neutral-100 pt-4 text-sm font-bold text-neutral-900">
           <span>Total</span>

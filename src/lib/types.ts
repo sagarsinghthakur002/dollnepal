@@ -1,3 +1,5 @@
+import type { Courier } from "./couriers";
+
 export type ProductCategory = "Doll" | "Bouquet" | "Gifts" | "Combo";
 
 export interface Product {
@@ -52,7 +54,7 @@ export type ShippingStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentMethod = "esewa" | "fonpay" | null;
+export type PaymentMethod = "esewa" | "khalti" | "bank" | "fonpay" | null;
 
 export interface Order {
   orderId: string;
@@ -68,7 +70,8 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   shippingStatus: ShippingStatus;
-  ncmTrackingId: string | null;
+  courier: Courier | null; // assigned courier partner
+  ncmTrackingId: string | null; // tracking ID for the assigned courier (field name kept for existing data)
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }

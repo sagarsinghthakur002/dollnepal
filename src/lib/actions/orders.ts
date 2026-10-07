@@ -1,5 +1,6 @@
 "use server";
 
+import { isCourier, type Courier } from "@/lib/couriers";
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
@@ -67,6 +68,7 @@ export async function createOrderAction(
         paymentStatus: "unpaid" satisfies PaymentStatus,
         paymentMethod: null,
         shippingStatus: "processing" satisfies ShippingStatus,
+        courier: null,
         ncmTrackingId: null,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -81,7 +83,7 @@ export async function createOrderAction(
 
 export async function markPaymentSubmittedAction(
   orderId: string,
-  paymentMethod: "esewa" | "fonpay",
+  paymentMethod: "esewa" | "khalti" | "bank",
   paymentProofUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
@@ -125,6 +127,7 @@ export async function updateOrderStatusAction(
     paymentStatus: PaymentStatus;
     shippingStatus: ShippingStatus;
     ncmTrackingId: string | null;
+    courier: Courier | null;
   }>
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
@@ -133,6 +136,8 @@ export async function updateOrderStatusAction(
     const ref = adminDb.collection("orders").doc(orderId);
     const existing = await ref.get();
     if (!existing.exists) throw new Error("Order not found.");
+
+    if (updates.courier != null && !isCourier(updates.courier)) throw new Error("Invalid courier.");
 
     await ref.update({ ...updates, updatedAt: FieldValue.serverTimestamp() });
 

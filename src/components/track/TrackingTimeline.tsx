@@ -1,12 +1,12 @@
 import { Check, Circle, Radio } from "lucide-react";
 import type { TrackingStep } from "@/lib/types";
 
-export default function TrackingTimeline({ steps, isLive }: { steps: TrackingStep[]; isLive: boolean }) {
+export default function TrackingTimeline({ steps, isLive, courierName = "Nepal Can Move" }: { steps: TrackingStep[]; isLive: boolean; courierName?: string }) {
   return (
     <div>
       <p className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500">
         <Radio size={12} className={isLive ? "text-emerald-500" : "text-neutral-400"} />
-        {isLive ? "Live status from Nepal Can Move" : "Status simulated — connect NCM API keys for live tracking"}
+        {isLive ? `Live status from ${courierName}` : "Status updated by DollNepal — use the courier link above for the latest scans"}
       </p>
 
       <ol className="space-y-0">

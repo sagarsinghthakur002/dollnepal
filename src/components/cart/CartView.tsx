@@ -26,56 +26,58 @@ export default function CartView() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
+    <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
       <div className="space-y-3 lg:col-span-2">
         {items.map((item) => (
-          <div key={item.productId} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-card ring-1 ring-black/5">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-brand-cream-200">
+          <div key={item.productId} className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl bg-white p-3 shadow-card ring-1 ring-black/5 sm:flex-nowrap sm:gap-4 sm:p-4">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand-cream-200 sm:h-20 sm:w-20">
               <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <Link href={`/product/${item.productId}`} className="font-display text-sm font-semibold text-neutral-900 hover:text-brand-pink-600 line-clamp-1">
+            <div className="min-w-0 flex-1 basis-[calc(100%-5rem)] sm:basis-auto">
+              <Link href={`/product/${item.productId}`} className="font-display text-sm font-semibold text-neutral-900 hover:text-brand-pink-600 line-clamp-2 sm:line-clamp-1">
                 {item.name}
               </Link>
               <p className="text-sm text-neutral-500">{formatNPR(item.price)} each</p>
             </div>
 
-            <div className="flex items-center rounded-full border border-neutral-200">
+            <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
+              <div className="flex items-center rounded-full border border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => updateQty(item.productId, item.qty - 1)}
+                  className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
+                  aria-label={`Decrease quantity of ${item.name}`}
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-7 text-center text-sm font-semibold text-neutral-800">{item.qty}</span>
+                <button
+                  type="button"
+                  onClick={() => updateQty(item.productId, item.qty + 1)}
+                  className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
+                  aria-label={`Increase quantity of ${item.name}`}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              <p className="ml-auto text-right text-sm font-bold text-neutral-900 sm:ml-0 sm:w-24 sm:shrink-0">{formatNPR(item.price * item.qty)}</p>
+
               <button
                 type="button"
-                onClick={() => updateQty(item.productId, item.qty - 1)}
-                className="flex h-9 w-9 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
-                aria-label={`Decrease quantity of ${item.name}`}
+                onClick={() => removeItem(item.productId)}
+                aria-label={`Remove ${item.name} from cart`}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-400 hover:bg-red-50 hover:text-red-600"
               >
-                <Minus size={14} />
-              </button>
-              <span className="w-7 text-center text-sm font-semibold text-neutral-800">{item.qty}</span>
-              <button
-                type="button"
-                onClick={() => updateQty(item.productId, item.qty + 1)}
-                className="flex h-9 w-9 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
-                aria-label={`Increase quantity of ${item.name}`}
-              >
-                <Plus size={14} />
+                <Trash2 size={16} />
               </button>
             </div>
-
-            <p className="w-24 shrink-0 text-right text-sm font-bold text-neutral-900">{formatNPR(item.price * item.qty)}</p>
-
-            <button
-              type="button"
-              onClick={() => removeItem(item.productId)}
-              aria-label={`Remove ${item.name} from cart`}
-              className="shrink-0 rounded-full p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 size={16} />
-            </button>
           </div>
         ))}
       </div>
 
-      <aside className="h-fit rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5">
+      <aside className="h-fit rounded-3xl bg-white p-4 sm:p-6 shadow-card ring-1 ring-black/5">
         <h2 className="font-display text-lg font-semibold text-neutral-900">Order Summary</h2>
         <div className="mt-4 flex justify-between text-sm text-neutral-600">
           <span>Subtotal</span>
@@ -85,7 +87,7 @@ export default function CartView() {
 
         <Link
           href="/checkout"
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full brand-gradient-bg px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02]"
+          className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full brand-gradient-bg px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02]"
         >
           Proceed to Checkout
         </Link>

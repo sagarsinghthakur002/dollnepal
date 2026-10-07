@@ -53,8 +53,8 @@ export default async function HomePage() {
             Add to cart, checkout, and <span className="brand-gradient-text">pay your way</span>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">
-            Pick your favourites, check out with your delivery details, and pay via eSewa
-            or Fonpay — or confirm your order directly on WhatsApp. We&apos;ll take it from there.
+            Pick your favourites, check out with your delivery details, and pay via eSewa,
+            Khalti or bank transfer — or confirm your order directly on WhatsApp. We&apos;ll take it from there.
           </p>
           <Link
             href="/shop"

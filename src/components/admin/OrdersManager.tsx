@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { updateOrderStatusAction } from "@/lib/actions/orders";
 import { formatNPR } from "@/lib/currency";
+import { COURIERS, isCourier, type Courier } from "@/lib/couriers";
 import { regionLabel } from "@/lib/shipping";
 import type { Order, PaymentStatus, ShippingStatus } from "@/lib/types";
 
@@ -83,6 +84,7 @@ function OrderDetail({ order }: { order: Order }) {
   const [paymentStatus, setPaymentStatus] = useState(order.paymentStatus);
   const [shippingStatus, setShippingStatus] = useState(order.shippingStatus);
   const [ncmTrackingId, setNcmTrackingId] = useState(order.ncmTrackingId ?? "");
+  const [courier, setCourier] = useState<Courier | "">(order.courier ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -93,6 +95,7 @@ function OrderDetail({ order }: { order: Order }) {
       await updateOrderStatusAction(order.orderId, {
         paymentStatus,
         shippingStatus,
+        courier: isCourier(courier) ? courier : null,
         ncmTrackingId: ncmTrackingId.trim() || null,
       });
       setSaved(true);
@@ -171,8 +174,22 @@ function OrderDetail({ order }: { order: Order }) {
             </div>
 
             <div>
+              <label className="mb-1 block text-xs font-medium text-neutral-600">Courier partner</label>
+              <select
+                value={courier}
+                onChange={(e) => setCourier(e.target.value as Courier | "")}
+                className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-brand-pink-400 focus:outline-none"
+              >
+                <option value="">Not assigned</option>
+                {COURIERS.map((c) => (
+                  <option key={c.value} value={c.value}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label className="mb-1 block text-xs font-medium text-neutral-600">
-                NCM tracking / AWB ID <span className="text-neutral-400">(optional)</span>
+                Courier tracking ID <span className="text-neutral-400">(optional)</span>
               </label>
               <input
                 type="text"

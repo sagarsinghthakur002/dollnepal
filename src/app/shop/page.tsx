@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Shop",
   description:
-    "Browse DollNepal's full catalogue of dolls, bouquets, gifts and combo hampers. Filter by category, add to cart, and check out with eSewa or Fonpay.",
+    "Browse DollNepal's full catalogue of dolls, bouquets, gifts and combo hampers. Filter by category, add to cart, and check out with eSewa, Khalti or bank transfer.",
 };
 
 export default async function ShopPage({

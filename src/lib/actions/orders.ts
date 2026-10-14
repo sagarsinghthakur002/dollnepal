@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
+import { getOrderById } from "@/lib/data/orders";
+import { sendAdminNewOrderEmail } from "@/lib/email";
 import { generateOrderId } from "@/lib/orderId";
 import { calculateShippingFee, isDeliveryRegion, totalWeightKg, type DeliveryRegion } from "@/lib/shipping";
 import type { CartItem, OrderCustomer, PaymentStatus, ShippingStatus } from "@/lib/types";
@@ -114,7 +116,15 @@ export async function markPaymentSubmittedAction(
     });
 
     revalidatePath(`/order/${orderId}`);
+    revalidatePath(`/order/${orderId}/thank-you`);
     revalidatePath("/admin/orders");
+
+    // Instant "New Order Received!" email to the admin (once, on the first payment submission).
+    if (existing.data()?.paymentStatus === "unpaid") {
+      const updated = await getOrderById(orderId);
+      if (updated) await sendAdminNewOrderEmail(updated);
+    }
+
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to update order." };

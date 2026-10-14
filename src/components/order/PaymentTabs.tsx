@@ -6,7 +6,8 @@ import Image from "next/image";
 import { upload } from "@vercel/blob/client";
 import { Copy, Check, BadgeCheck, UploadCloud, X } from "lucide-react";
 import { markPaymentSubmittedAction } from "@/lib/actions/orders";
-import type { PaymentStatus } from "@/lib/types";
+import DownloadInvoiceButton from "@/components/order/DownloadInvoiceButton";
+import type { Order, PaymentStatus } from "@/lib/types";
 
 type PayTab = "esewa" | "khalti" | "bank";
 
@@ -57,9 +58,11 @@ const PAY_METHODS: Record<
 export default function PaymentTabs({
   orderId,
   paymentStatus,
+  order,
 }: {
   orderId: string;
   paymentStatus: PaymentStatus;
+  order: Order;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<PayTab>("esewa");
@@ -127,7 +130,7 @@ export default function PaymentTabs({
         setSubmitError(result.error);
         return;
       }
-      router.refresh();
+      router.push(`/order/${orderId}/thank-you`);
     } catch {
       setSubmitError("Upload failed. Please check your connection and try again.");
     } finally {
@@ -143,6 +146,7 @@ export default function PaymentTabs({
         <BadgeCheck size={28} className="mx-auto text-emerald-600" />
         <p className="mt-2 font-display text-lg font-semibold text-emerald-800">Payment confirmed</p>
         <p className="text-sm text-emerald-700">Thank you! Your order is being processed.</p>
+        <div className="mt-4"><DownloadInvoiceButton order={order} /></div>
       </div>
     );
   }
@@ -155,6 +159,7 @@ export default function PaymentTabs({
         <p className="text-sm text-amber-700">
           We&apos;ve received your confirmation and are verifying your payment. We&apos;ll message you on WhatsApp shortly.
         </p>
+        <div className="mt-4"><DownloadInvoiceButton order={order} /></div>
       </div>
     );
   }

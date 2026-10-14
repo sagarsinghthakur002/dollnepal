@@ -88,7 +88,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         </div>
 
         <div>
-          <PaymentTabs orderId={order.orderId} paymentStatus={order.paymentStatus} />
+          <PaymentTabs orderId={order.orderId} paymentStatus={order.paymentStatus} order={order} />
         </div>
       </div>
     </main>

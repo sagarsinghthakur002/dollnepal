@@ -29,6 +29,15 @@ export function generateInvoicePdf(order: Order): void {
     `Phone: ${order.customer.phone}`,
     `Delivery Location: ${order.customer.location}`,
     `Delivery Region: ${regionLabel(order.deliveryRegion)}`,
+    `Payment: ${
+      order.paymentStatus === "paid"
+        ? "Paid"
+        : order.paymentStatus === "pending_verification"
+          ? "Submitted - pending verification"
+          : order.paymentStatus === "refunded"
+            ? "Refunded"
+            : "Unpaid"
+    }`,
   ];
   infoLines.forEach((line, i) => doc.text(line, 40, 134 + i * 16));
 

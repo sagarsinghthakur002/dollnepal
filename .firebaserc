@@ -1,8 +1,5 @@
 {
   "projects": {
-    "default": "demo-dollnepal",
-    "production": "dollnepal-2577b"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "demo-dollnepal"
+  }
 }

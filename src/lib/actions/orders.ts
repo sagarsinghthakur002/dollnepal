@@ -77,6 +77,11 @@ export async function createOrderAction(
       });
 
     revalidatePath("/admin/orders");
+
+    // Instant email to the admin as soon as an order is placed.
+    const created = await getOrderById(orderId);
+    if (created) await sendAdminNewOrderEmail(created, "placed");
+
     return { ok: true, orderId };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to place order." };
@@ -122,7 +127,7 @@ export async function markPaymentSubmittedAction(
     // Instant "New Order Received!" email to the admin (once, on the first payment submission).
     if (existing.data()?.paymentStatus === "unpaid") {
       const updated = await getOrderById(orderId);
-      if (updated) await sendAdminNewOrderEmail(updated);
+      if (updated) await sendAdminNewOrderEmail(updated, "paid");
     }
 
     return { ok: true };

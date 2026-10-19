@@ -37,8 +37,11 @@ function formatDate(iso: string): string {
   });
 }
 
-export function buildAdminOrderEmail(order: Order, adminUrl: string) {
-  const subject = `New Order Received! Order #${order.orderId}`;
+export type OrderEmailKind = "placed" | "paid";
+
+export function buildAdminOrderEmail(order: Order, adminUrl: string, kind: OrderEmailKind = "paid") {
+  const paid = kind === "paid";
+  const subject = `New Order Received! Order #${order.orderId} (${paid ? "payment submitted" : "awaiting payment"})`;
   const date = formatDate(order.createdAt);
   const method = order.paymentMethod ? METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod : "—";
   const total = formatNPR(order.total);
@@ -47,7 +50,7 @@ export function buildAdminOrderEmail(order: Order, adminUrl: string) {
     subject,
     ``,
     `Customer Name: ${order.customer.name}`,
-    `Total Paid: ${total} (via ${method})`,
+    `${paid ? "Total Paid" : "Order Total (not paid yet)"}: ${paid ? `${total} (via ${method})` : total}`,
     `Order ID: ${order.orderId}`,
     `Date: ${date}`,
     ``,
@@ -65,10 +68,10 @@ export function buildAdminOrderEmail(order: Order, adminUrl: string) {
 <tr><td>
 <p style="margin:0;color:#d31b70;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">DollNepal</p>
 <h1 style="margin:6px 0 4px;font-size:22px;color:#171717">New Order Received! Order #${esc(order.orderId)}</h1>
-<p style="margin:0 0 16px;color:#525252;font-size:14px">A customer has just paid and submitted their payment proof.</p>
+<p style="margin:0 0 16px;color:#525252;font-size:14px">${paid ? "A customer has just paid and submitted their payment proof." : "A customer has just placed an order. Payment has not been submitted yet."}</p>
 <table role="presentation" width="100%" style="border-top:1px solid #eee;border-bottom:1px solid #eee">
 ${row("Customer Name", order.customer.name)}
-${row("Total Paid", `${total} (via ${method})`)}
+${row(paid ? "Total Paid" : "Order Total", paid ? `${total} (via ${method})` : `${total} - not paid yet`)}
 ${row("Order ID", order.orderId)}
 ${row("Date", date)}
 </table>
@@ -81,17 +84,20 @@ ${row("Date", date)}
 }
 
 /** Emails the admin that a new paid order needs attention. Never throws. */
-export async function sendAdminNewOrderEmail(order: Order): Promise<void> {
+export async function sendAdminNewOrderEmail(order: Order, kind: OrderEmailKind = "paid"): Promise<void> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
     const to = (process.env.ADMIN_NOTIFY_EMAIL || "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    if (!apiKey || to.length === 0) return;
+    if (!apiKey || to.length === 0) {
+      console.error("[email] skipped: RESEND_API_KEY or ADMIN_NOTIFY_EMAIL is not set in this environment");
+      return;
+    }
 
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-    const { subject, text, html } = buildAdminOrderEmail(order, `${siteUrl}/admin/orders`);
+    const { subject, text, html } = buildAdminOrderEmail(order, `${siteUrl}/admin/orders`, kind);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

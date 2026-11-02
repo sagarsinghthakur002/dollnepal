@@ -82,10 +82,10 @@ export default function Footer() {
           </ul>
 
           <div className="mt-5 flex items-center gap-3">
-            <a href="#" aria-label="DollNepal on Instagram" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
+            <a href="https://www.instagram.com/dollnepal.np" aria-label="DollNepal on Instagram" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
               <InstagramIcon size={18} />
             </a>
-            <a href="#" aria-label="DollNepal on TikTok" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
+            <a href="https://www.tiktok.com/@dollnepal.np" aria-label="DollNepal on TikTok" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
               <Music2 size={18} />
             </a>
           </div>

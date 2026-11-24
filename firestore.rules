@@ -10,6 +10,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Orders contain customer PII (name, phone, address) — never
     // client-readable or writable directly. All order reads/writes go
     // through server-side Admin SDK code (order page, admin panel, track page).

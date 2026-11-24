@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -17,11 +17,33 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const { count } = useCart();
 
+  const isHome = pathname === "/";
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync initial state with the current scroll position
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // On the home page the bar floats transparently over the hero banner until the page is scrolled.
+  const transparent = isHome && !scrolled && !open;
+
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-pink-100 bg-white/85 backdrop-blur-md">
+    <header
+      className={`z-50 w-full transition-all duration-300 ${
+        isHome ? "fixed inset-x-0 top-0" : "sticky top-0"
+      } ${
+        transparent
+          ? "border-b border-transparent bg-gradient-to-b from-black/40 to-transparent"
+          : "border-b border-brand-pink-100 bg-white/90 shadow-sm backdrop-blur-md"
+      }`}
+    >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Primary">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
@@ -29,32 +51,52 @@ export default function Navbar() {
             alt="DollNepal logo"
             width={44}
             height={44}
-            className="h-11 w-11 rounded-full object-cover ring-2 ring-brand-gold-300"
+            className={`h-11 w-11 rounded-full object-cover ring-2 transition-colors ${
+              transparent ? "ring-white/80" : "ring-brand-gold-300"
+            }`}
           />
           <span className="font-display text-xl font-semibold tracking-tight">
-            <span className="brand-gradient-text">DollNepal</span>
+            {transparent ? (
+              <span className="text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">DollNepal</span>
+            ) : (
+              <span className="brand-gradient-text">DollNepal</span>
+            )}
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-7 lg:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={`text-sm font-semibold transition-colors ${
-                  pathname === link.href ? "text-brand-pink-600" : "text-neutral-600 hover:text-brand-pink-500"
-                }`}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
+        <ul
+          className={`hidden items-center gap-1 rounded-full p-1 transition-colors lg:flex ${
+            transparent ? "bg-white/10 ring-1 ring-white/25 backdrop-blur-sm" : "bg-brand-cream-100 ring-1 ring-black/5"
+          }`}
+        >
+          {NAV_LINKS.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`block rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                    active
+                      ? "bg-white text-brand-pink-600 shadow-sm"
+                      : transparent
+                        ? "text-white/90 hover:bg-white/15 hover:text-white"
+                        : "text-neutral-600 hover:bg-white hover:text-brand-pink-500"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="flex items-center gap-2">
           <Link
             href="/cart"
-            className="relative inline-flex items-center gap-1.5 rounded-full brand-gradient-bg px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105"
+            className={`relative inline-flex min-h-11 items-center gap-1.5 rounded-full brand-gradient-bg px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105 ${
+              transparent ? "ring-2 ring-white/50" : ""
+            }`}
           >
             <ShoppingBag size={16} />
             <span className="hidden sm:inline">Cart</span>
@@ -67,7 +109,9 @@ export default function Navbar() {
 
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-full p-2 text-brand-pink-600 lg:hidden"
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors lg:hidden ${
+              transparent ? "bg-white/15 text-white ring-1 ring-white/30 backdrop-blur-sm" : "text-brand-pink-600"
+            }`}
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
@@ -85,7 +129,7 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className={`block rounded-xl px-3 py-2.5 text-base font-semibold ${
+                  className={`block rounded-xl px-3 py-3 text-base font-semibold ${
                     pathname === link.href ? "bg-brand-pink-50 text-brand-pink-600" : "text-neutral-700"
                   }`}
                 >

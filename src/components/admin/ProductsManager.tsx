@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Flame, X } from "lucide-react";
 import ProductForm from "@/components/admin/ProductForm";
-import { createProductAction, updateProductAction, deleteProductAction } from "@/lib/actions/products";
+import {
+  createProductAction,
+  updateProductAction,
+  deleteProductAction,
+  toggleProductFlagAction,
+} from "@/lib/actions/products";
 import { formatNPR } from "@/lib/currency";
+import { formatDiscountBadge, getFinalPrice, hasDiscount } from "@/lib/pricing";
 import type { Product } from "@/lib/types";
 
 export default function ProductsManager({ products }: { products: Product[] }) {
@@ -13,6 +19,21 @@ export default function ProductsManager({ products }: { products: Product[] }) {
   const [modal, setModal] = useState<"create" | Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
+  const [pendingToggle, setPendingToggle] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  function toggle(product: Product, flag: "isOutOfStock" | "isHidden") {
+    const key = `${product.id}:${flag}`;
+    setPendingToggle(key);
+    setToggleError(null);
+    startTransition(async () => {
+      const result = await toggleProductFlagAction(product.id, flag, !product[flag]);
+      if (!result.ok) setToggleError(result.error);
+      router.refresh();
+      setPendingToggle(null);
+    });
+  }
 
   function refreshAndClose() {
     router.refresh();
@@ -47,30 +68,48 @@ export default function ProductsManager({ products }: { products: Product[] }) {
         </button>
       </div>
 
+      {toggleError && <p className="mb-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{toggleError}</p>}
+
       <div className="overflow-x-auto rounded-3xl bg-white shadow-card ring-1 ring-black/5">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[860px] text-left text-sm">
           <thead className="bg-brand-cream-100 text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-5 py-3">Product</th>
               <th className="px-5 py-3">Category</th>
               <th className="px-5 py-3">Price</th>
               <th className="px-5 py-3">Trending</th>
+              <th className="px-5 py-3">Out of stock</th>
+              <th className="px-5 py-3">Hidden</th>
               <th className="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {products.length === 0 ? (
-              <tr><td colSpan={5} className="px-5 py-8 text-center text-neutral-400">No products yet.</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-neutral-400">No products yet.</td></tr>
             ) : (
               products.map((product) => (
-                <tr key={product.id} className="hover:bg-brand-cream-100/60">
+                <tr key={product.id} className={`hover:bg-brand-cream-100/60 ${product.isHidden ? "bg-neutral-50 opacity-75" : ""}`}>
                   <td className="flex items-center gap-3 px-5 py-3">
                     {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary Storage/emulator URL thumbnail */}
                     <img src={product.imageUrl} alt="" className="h-10 w-10 rounded-xl object-cover" />
                     <span className="font-medium text-neutral-800">{product.name}</span>
                   </td>
                   <td className="px-5 py-3 text-neutral-600">{product.category}</td>
-                  <td className="px-5 py-3 text-neutral-600">{formatNPR(product.price)}</td>
+                  <td className="px-5 py-3 text-neutral-600">
+                    {hasDiscount(product.discountPercent) ? (
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-neutral-800">
+                          {formatNPR(getFinalPrice(product.price, product.discountPercent))}{" "}
+                          <span className="rounded bg-red-50 px-1 py-0.5 text-[10px] font-bold text-red-600">
+                            {formatDiscountBadge(product.discountPercent)}
+                          </span>
+                        </span>
+                        <span className="text-xs text-neutral-400">Base: {formatNPR(product.price)}</span>
+                      </div>
+                    ) : (
+                      formatNPR(product.price)
+                    )}
+                  </td>
                   <td className="px-5 py-3">
                     {product.trending ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-brand-pink-50 px-2.5 py-1 text-xs font-semibold text-brand-pink-600">
@@ -79,6 +118,22 @@ export default function ProductsManager({ products }: { products: Product[] }) {
                     ) : (
                       <span className="text-xs text-neutral-400">—</span>
                     )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <Switch
+                      label={`Out of stock: ${product.name}`}
+                      checked={product.isOutOfStock}
+                      loading={pendingToggle === `${product.id}:isOutOfStock`}
+                      onClick={() => toggle(product, "isOutOfStock")}
+                    />
+                  </td>
+                  <td className="px-5 py-3">
+                    <Switch
+                      label={`Hide product: ${product.name}`}
+                      checked={product.isHidden}
+                      loading={pendingToggle === `${product.id}:isHidden`}
+                      onClick={() => toggle(product, "isHidden")}
+                    />
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-2">
@@ -165,5 +220,35 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         {children}
       </div>
     </div>
+  );
+}
+
+function Switch({
+  label,
+  checked,
+  loading,
+  onClick,
+}: {
+  label: string;
+  checked: boolean;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={loading}
+      onClick={onClick}
+      className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${checked ? "bg-red-500" : "bg-neutral-200"}`}
+    >
+      <span
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0.5"
+        }`}
+      />
+    </button>
   );
 }

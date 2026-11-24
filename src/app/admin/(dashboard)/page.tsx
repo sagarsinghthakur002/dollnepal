@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Package, ClipboardList, Flame, Clock } from "lucide-react";
-import { getAllProducts } from "@/lib/data/products";
+import { getAllProductsAdmin } from "@/lib/data/products";
 import { getAllOrders } from "@/lib/data/orders";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOverviewPage() {
-  const [products, orders] = await Promise.all([getAllProducts(), getAllOrders()]);
+  const [products, orders] = await Promise.all([getAllProductsAdmin(), getAllOrders()]);
   const trendingCount = products.filter((p) => p.trending).length;
   const pendingVerification = orders.filter((o) => o.paymentStatus === "pending_verification").length;
 

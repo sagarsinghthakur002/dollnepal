@@ -7,6 +7,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { getOrderById } from "@/lib/data/orders";
 import { sendAdminNewOrderEmail } from "@/lib/email";
+import { getFinalPrice, normalizeDiscountPercent } from "@/lib/pricing";
 import { generateOrderId } from "@/lib/orderId";
 import { calculateShippingFee, isDeliveryRegion, totalWeightKg, type DeliveryRegion } from "@/lib/shipping";
 import type { CartItem, OrderCustomer, PaymentStatus, ShippingStatus } from "@/lib/types";
@@ -31,15 +32,22 @@ export async function createOrderAction(
         const doc = await adminDb.collection("products").doc(item.productId).get();
         if (!doc.exists) throw new Error(`Product "${item.name}" is no longer available.`);
         const data = doc.data()!;
+        if (data.isHidden) throw new Error(`Product "${item.name}" is no longer available.`);
+        if (data.isOutOfStock) throw new Error(`"${data.name as string}" is currently out of stock. Please remove it from your cart.`);
         const qty = Math.max(1, Math.floor(item.qty));
+        const basePrice = data.price as number;
+        const discountPercent = normalizeDiscountPercent(data.discountPercent);
+        // The stored `price` is never modified; the charged price is derived from it.
+        const unitPrice = getFinalPrice(basePrice, discountPercent);
         return {
           productId: item.productId,
           name: data.name as string,
-          price: data.price as number,
+          price: unitPrice,
+          ...(discountPercent > 0 ? { originalPrice: basePrice, discountPercent } : {}),
           weight: typeof data.weight === "number" ? data.weight : 0,
           image: data.imageUrl as string,
           qty,
-          lineTotal: (data.price as number) * qty,
+          lineTotal: unitPrice * qty,
         };
       })
     );

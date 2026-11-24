@@ -6,7 +6,8 @@ import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import ProductGrid from "@/components/ProductGrid";
 import ProductDetailActions from "@/components/ProductDetailActions";
-import { formatNPR } from "@/lib/currency";
+import PriceDisplay from "@/components/PriceDisplay";
+import { getFinalPrice } from "@/lib/pricing";
 import { getProductById, getRelatedProducts } from "@/lib/data/products";
 
 export const dynamic = "force-dynamic";
@@ -42,8 +43,8 @@ export default async function ProductDetailPage({ params }: Props) {
     offers: {
       "@type": "Offer",
       priceCurrency: "NPR",
-      price: product.price,
-      availability: "https://schema.org/InStock",
+      price: getFinalPrice(product.price, product.discountPercent),
+      availability: product.isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
     },
   };
 
@@ -65,7 +66,12 @@ export default async function ProductDetailPage({ params }: Props) {
 
         <div className="grid gap-10 md:grid-cols-2">
           <article className="relative aspect-square overflow-hidden rounded-3xl bg-brand-cream-200 shadow-card">
-            <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 768px) 45vw, 90vw" className="object-cover" priority />
+            {product.isOutOfStock && (
+              <span className="absolute right-4 top-4 z-10 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow">
+                Out of Stock
+              </span>
+            )}
+            <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 768px) 45vw, 90vw" className={`object-cover ${product.isOutOfStock ? "opacity-70" : ""}`} priority />
           </article>
 
           <aside>
@@ -79,7 +85,10 @@ export default async function ProductDetailPage({ params }: Props) {
             )}
 
             <h1 className="mt-3 font-display text-3xl font-semibold text-neutral-900">{product.name}</h1>
-            <p className="mt-3 text-2xl font-bold text-brand-pink-600">{formatNPR(product.price)}</p>
+            <PriceDisplay price={product.price} discountPercent={product.discountPercent} size="lg" className="mt-3" />
+            {product.isOutOfStock && (
+              <p className="mt-2 text-sm font-semibold text-red-600">This item is currently out of stock.</p>
+            )}
 
             {product.description && (
               descriptionLines(product.description).length > 1 ? (

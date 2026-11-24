@@ -3,6 +3,7 @@ import { Gift, Flower2, PartyPopper, Package } from "lucide-react";
 import Hero from "@/components/Hero";
 import TrendingSection from "@/components/TrendingSection";
 import { getTrendingProducts } from "@/lib/data/products";
+import { getHeroSettings } from "@/lib/data/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +15,11 @@ const CATEGORY_TILES = [
 ];
 
 export default async function HomePage() {
-  const trending = await getTrendingProducts(4);
+  const [trending, hero] = await Promise.all([getTrendingProducts(4), getHeroSettings()]);
 
   return (
     <main>
-      <Hero />
+      <Hero backgroundUrl={hero.imageUrl} />
 
       <section aria-labelledby="categories-heading" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <h2 id="categories-heading" className="text-center font-display text-3xl font-semibold text-neutral-900">

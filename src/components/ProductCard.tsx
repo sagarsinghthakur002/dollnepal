@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatNPR } from "@/lib/currency";
+import PriceDisplay from "@/components/PriceDisplay";
 import AddToCartButton from "@/components/AddToCartButton";
 import type { Product } from "@/lib/types";
 
@@ -14,6 +14,11 @@ const CATEGORY_STYLES: Record<string, string> = {
 export default function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-soft">
+      {product.isOutOfStock && (
+        <span className="absolute right-3 top-3 z-10 rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+          Out of Stock
+        </span>
+      )}
       {product.trending && (
         <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-neutral-900/85 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
           🔥 Trending
@@ -26,7 +31,7 @@ export default function ProductCard({ product }: { product: Product }) {
           alt={product.name}
           fill
           sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className={`object-cover transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? "opacity-60 grayscale-[30%]" : ""}`}
         />
       </Link>
 
@@ -39,7 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <h3 className="font-display text-base font-semibold text-neutral-900 line-clamp-1">{product.name}</h3>
         </Link>
 
-        <p className="text-sm font-bold text-brand-purple-700">{formatNPR(product.price)}</p>
+        <PriceDisplay price={product.price} discountPercent={product.discountPercent} />
 
         <div className="mt-2">
           <AddToCartButton product={product} />

@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { del } from "@vercel/blob";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
+import { normalizeDiscountPercent } from "@/lib/pricing";
 import type { ProductCategory } from "@/lib/types";
 
 const CATEGORIES: ProductCategory[] = ["Doll", "Bouquet", "Gifts", "Combo"];
@@ -18,6 +19,9 @@ export interface ProductInput {
   imagePath: string | null;
   description: string;
   trending: boolean;
+  discountPercent: number;
+  isOutOfStock: boolean;
+  isHidden: boolean;
 }
 
 function slugify(name: string): string {
@@ -39,6 +43,10 @@ function validate(input: ProductInput) {
   if (!Number.isFinite(input.weight) || input.weight <= 0 || input.weight > 1000) {
     throw new Error("Weight must be a number greater than 0 (in kg).");
   }
+  const d = Number(input.discountPercent ?? 0);
+  if (!Number.isFinite(d) || d < 0 || d > 100) {
+    throw new Error("Discount must be a number between 0 and 100.");
+  }
   if (!input.imageUrl?.trim()) throw new Error("A product image is required.");
 }
 
@@ -46,6 +54,7 @@ function revalidateStorefront() {
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/trending");
+  revalidatePath("/cart");
   revalidatePath("/admin/products");
   revalidatePath("/sitemap.xml");
 }
@@ -76,6 +85,9 @@ export async function createProductAction(
         imagePath: input.imagePath,
         description: input.description?.trim() ?? "",
         trending: Boolean(input.trending),
+        discountPercent: normalizeDiscountPercent(input.discountPercent),
+        isOutOfStock: Boolean(input.isOutOfStock),
+        isHidden: Boolean(input.isHidden),
         createdAt: FieldValue.serverTimestamp(),
       });
 
@@ -109,6 +121,9 @@ export async function updateProductAction(
       imagePath: input.imagePath,
       description: input.description?.trim() ?? "",
       trending: Boolean(input.trending),
+      discountPercent: normalizeDiscountPercent(input.discountPercent),
+      isOutOfStock: Boolean(input.isOutOfStock),
+      isHidden: Boolean(input.isHidden),
     });
 
     // If the image was replaced with a newly uploaded one, clean up the old file.
@@ -145,5 +160,29 @@ export async function deleteProductAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to delete product." };
+  }
+}
+
+/** Quick toggles from the admin product list. */
+export async function toggleProductFlagAction(
+  id: string,
+  flag: "isOutOfStock" | "isHidden",
+  value: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireAdminSession();
+    if (flag !== "isOutOfStock" && flag !== "isHidden") throw new Error("Invalid flag.");
+
+    const ref = adminDb.collection("products").doc(id);
+    const existing = await ref.get();
+    if (!existing.exists) throw new Error("Product not found.");
+
+    await ref.update({ [flag]: Boolean(value) });
+
+    revalidateStorefront();
+    revalidatePath(`/product/${id}`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to update product." };
   }
 }

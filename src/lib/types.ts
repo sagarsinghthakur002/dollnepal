@@ -12,13 +12,18 @@ export interface Product {
   imagePath: string | null; // Vercel Blob URL (same as imageUrl), null for seed/local images
   description: string;
   trending: boolean;
+  discountPercent: number; // 0-100; `price` stays the base price, final price is derived (see lib/pricing.ts)
+  isOutOfStock: boolean; // shown with an "Out of Stock" badge, cannot be added to cart
+  isHidden: boolean; // hidden from the public storefront, still visible in admin
   createdAt: string; // ISO
 }
 
 export interface CartItem {
   productId: string;
   name: string;
-  price: number;
+  price: number; // unit price AFTER any discount
+  originalPrice?: number; // base price, present when a discount was applied
+  discountPercent?: number;
   weight?: number; // kg per unit (absent on carts saved before weights existed)
   image: string;
   qty: number;
@@ -27,7 +32,9 @@ export interface CartItem {
 export interface OrderItem {
   productId: string;
   name: string;
-  price: number;
+  price: number; // unit price charged (after discount)
+  originalPrice?: number; // base price at order time, when discounted
+  discountPercent?: number;
   weight: number;
   image: string;
   qty: number;
@@ -82,4 +89,9 @@ export interface TrackingStep {
   description: string;
   done: boolean;
   current: boolean;
+}
+
+export interface HeroSettings {
+  imageUrl: string | null; // festival / banner background; null = solid fallback colour
+  imagePath: string | null; // Vercel Blob URL when uploaded (for cleanup), null for external URLs
 }

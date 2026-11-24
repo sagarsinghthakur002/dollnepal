@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import { getFinalPrice, hasDiscount } from "@/lib/pricing";
 import type { CartItem, Product } from "@/lib/types";
 
 const STORAGE_KEY = "dollnepal_cart";
@@ -46,6 +47,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, hydrated]);
 
   const addItem = useCallback((product: Product, qty = 1) => {
+    if (product.isOutOfStock) return; // out-of-stock products can never enter the cart
+    const discounted = hasDiscount(product.discountPercent);
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
@@ -55,7 +58,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [
         ...prev,
-        { productId: product.id, name: product.name, price: product.price, weight: product.weight, image: product.imageUrl, qty },
+        {
+          productId: product.id,
+          name: product.name,
+          price: getFinalPrice(product.price, product.discountPercent),
+          ...(discounted ? { originalPrice: product.price, discountPercent: product.discountPercent } : {}),
+          weight: product.weight,
+          image: product.imageUrl,
+          qty,
+        },
       ];
     });
   }, []);

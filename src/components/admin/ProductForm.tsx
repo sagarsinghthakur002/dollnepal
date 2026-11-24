@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { UploadCloud, ImagePlus, List } from "lucide-react";
 import { descriptionToEditorText, editorTextToDescription } from "@/lib/description";
+import { formatNPR } from "@/lib/currency";
+import { getFinalPrice } from "@/lib/pricing";
 import type { Product, ProductCategory } from "@/lib/types";
 import type { ProductInput } from "@/lib/actions/products";
 
@@ -35,6 +37,11 @@ export default function ProductForm({
   );
   const descRef = useRef<HTMLTextAreaElement>(null);
   const [trending, setTrending] = useState(Boolean(initialProduct?.trending));
+  const [discount, setDiscount] = useState(
+    initialProduct && initialProduct.discountPercent > 0 ? String(initialProduct.discountPercent) : ""
+  );
+  const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialProduct?.isOutOfStock));
+  const [isHidden, setIsHidden] = useState(Boolean(initialProduct?.isHidden));
 
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl ?? "");
   const [imagePath, setImagePath] = useState<string | null>(initialProduct?.imagePath ?? null);
@@ -139,6 +146,12 @@ export default function ProductForm({
       return;
     }
 
+    const discountNum = discount === "" ? 0 : Number(discount);
+    if (!Number.isFinite(discountNum) || discountNum < 0 || discountNum > 100) {
+      setError("Discount must be a number between 0 and 100.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await onSubmit({
@@ -150,6 +163,9 @@ export default function ProductForm({
         imagePath,
         description: editorTextToDescription(description),
         trending,
+        discountPercent: discountNum,
+        isOutOfStock,
+        isHidden,
       });
       if (!result.ok) {
         setError(result.error);
@@ -232,6 +248,30 @@ export default function ProductForm({
       </div>
 
       <div>
+        <label htmlFor="pf-discount" className="mb-1 block text-xs font-semibold text-neutral-600">
+          Discount % <span className="font-normal text-neutral-400">(optional, 0–100)</span>
+        </label>
+        <input
+          id="pf-discount"
+          type="number"
+          min="0"
+          max="100"
+          step="any"
+          inputMode="decimal"
+          value={discount}
+          onChange={(e) => setDiscount(e.target.value)}
+          className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm focus:border-brand-pink-400 focus:outline-none"
+          placeholder="0"
+        />
+        {Number(discount) > 0 && price !== "" && Number.isFinite(Number(price)) && (
+          <p className="mt-1 text-xs text-emerald-700">
+            Customers will pay <strong>{formatNPR(getFinalPrice(Number(price), Number(discount)))}</strong>{" "}
+            <span className="text-neutral-400 line-through">{formatNPR(Number(price))}</span>. Your saved price stays {formatNPR(Number(price))}.
+          </p>
+        )}
+      </div>
+
+      <div>
         <span className="mb-1 block text-xs font-semibold text-neutral-600">Product photo</span>
         <div className="flex items-center gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-cream-200 ring-1 ring-black/5">
@@ -303,6 +343,21 @@ export default function ProductForm({
         <span className="text-sm font-medium text-neutral-700">Mark as trending 🔥</span>
       </label>
 
+      <Toggle
+        label="Out of Stock"
+        hint="Shows an “Out of Stock” badge and disables Add to Cart."
+        checked={isOutOfStock}
+        onChange={setIsOutOfStock}
+        danger
+      />
+      <Toggle
+        label="Hide product"
+        hint="Completely hidden from the storefront, shop, trending and the product page. Still visible here in admin."
+        checked={isHidden}
+        onChange={setIsHidden}
+        danger
+      />
+
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
@@ -320,5 +375,44 @@ export default function ProductForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function Toggle({
+  label,
+  hint,
+  checked,
+  onChange,
+  danger = false,
+}: {
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  danger?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${
+          checked ? (danger ? "bg-red-500" : "brand-gradient-bg") : "bg-neutral-200"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+      <div>
+        <p className="text-sm font-medium text-neutral-700">{label}</p>
+        <p className="text-xs text-neutral-400">{hint}</p>
+      </div>
+    </div>
   );
 }

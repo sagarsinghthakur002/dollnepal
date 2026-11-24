@@ -12,6 +12,7 @@ export default function ProductDetailActions({ product }: { product: Product }) 
   const [added, setAdded] = useState(false);
 
   function handleAdd() {
+    if (product.isOutOfStock) return;
     addItem(product, qty);
     setAdded(true);
   }
@@ -19,7 +20,7 @@ export default function ProductDetailActions({ product }: { product: Product }) 
   return (
     <div className="mt-8">
       <div className="flex items-center gap-4">
-        <div className="flex items-center rounded-full border border-neutral-200">
+        <div className={`flex items-center rounded-full border border-neutral-200 ${product.isOutOfStock ? "pointer-events-none opacity-50" : ""}`}>
           <button
             type="button"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -42,10 +43,11 @@ export default function ProductDetailActions({ product }: { product: Product }) 
         <button
           type="button"
           onClick={handleAdd}
-          className="inline-flex items-center gap-2 rounded-full brand-gradient-bg px-8 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105"
+          disabled={product.isOutOfStock}
+          className="inline-flex items-center gap-2 rounded-full brand-gradient-bg px-8 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:bg-none disabled:text-neutral-500 disabled:shadow-none disabled:hover:scale-100"
         >
           {added ? <Check size={18} /> : <ShoppingBag size={18} />}
-          {added ? "Added to cart" : "Add to Cart"}
+          {product.isOutOfStock ? "Out of Stock" : added ? "Added to cart" : "Add to Cart"}
         </button>
       </div>
 

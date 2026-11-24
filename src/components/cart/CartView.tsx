@@ -38,7 +38,18 @@ export default function CartView() {
               <Link href={`/product/${item.productId}`} className="font-display text-sm font-semibold text-neutral-900 hover:text-brand-pink-600 line-clamp-2 sm:line-clamp-1">
                 {item.name}
               </Link>
-              <p className="text-sm text-neutral-500">{formatNPR(item.price)} each</p>
+              <p className="text-sm text-neutral-500">
+                {formatNPR(item.price)} each
+                {item.originalPrice != null && item.originalPrice > item.price && (
+                  <>
+                    {" "}
+                    <span className="text-xs text-neutral-400 line-through">{formatNPR(item.originalPrice)}</span>
+                    {item.discountPercent ? (
+                      <span className="ml-1 rounded bg-red-50 px-1 py-0.5 text-[10px] font-bold text-red-600">-{item.discountPercent}%</span>
+                    ) : null}
+                  </>
+                )}
+              </p>
             </div>
 
             <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">

@@ -127,3 +127,17 @@ works fully without them:
 - eSewa/Fonpay QR codes (`public/payment/*.svg`) and IDs (`PaymentTabs.tsx`) are
   placeholders — replace with your real ones.
 - TikTok/Instagram footer links are `#` placeholders per the brief.
+
+## Discounts, stock, hidden products and hero banner
+
+Product documents (`products/{id}`) gain three optional fields — existing products keep working without them:
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `discountPercent` | number 0–100 | `0` | Percentage off. `price` is never changed; the final price is derived (`src/lib/pricing.ts`). |
+| `isOutOfStock` | boolean | `false` | "Out of Stock" badge, Add to Cart disabled, orders for it are rejected. |
+| `isHidden` | boolean | `false` | Hidden from shop, trending, home, sitemap and the product page (404). Still visible in admin. |
+
+A new document `settings/hero` stores `{ imageUrl, imagePath, updatedAt }` for the homepage banner
+(Admin → Hero banner). With no image the hero uses solid `#2C3480`.
+Order items now store the **charged** unit price in `price`, plus `originalPrice` and `discountPercent` when discounted.

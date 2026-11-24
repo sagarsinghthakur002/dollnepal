@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutGrid, Package, ClipboardList, LogOut } from "lucide-react";
+import { LayoutGrid, Package, ClipboardList, ImageIcon, LogOut } from "lucide-react";
 import { requireAdminSession, signOutAdminAction } from "@/lib/actions/auth";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const NAV = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/hero", label: "Hero banner", icon: ImageIcon },
 ];
 
 export default async function AdminDashboardLayout({

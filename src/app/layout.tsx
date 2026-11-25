@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloatButton from "@/components/WhatsAppFloatButton";
+import PwaRegister from "@/components/PwaRegister";
 import { CartProvider } from "@/components/cart/CartContext";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -41,7 +42,16 @@ export const metadata: Metadata = {
     description: "Premium dolls, gift bouquets, combo hampers and cute gifts — order online, delivered across Nepal.",
     images: ["/logo.jpg"],
   },
-  icons: { icon: "/logo.jpg" },
+  icons: { icon: "/logo.jpg", apple: "/icons/apple-touch-icon.png" },
+  applicationName: "DollNepal",
+  appleWebApp: { capable: true, title: "DollNepal", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#d31b70",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -72,6 +82,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="flex-1">{children}</div>
           <Footer />
           <WhatsAppFloatButton />
+          <PwaRegister />
         </CartProvider>
       </body>
     </html>

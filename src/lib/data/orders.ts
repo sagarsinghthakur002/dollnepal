@@ -20,6 +20,8 @@ function toOrder(doc: QueryDocumentSnapshot): Order {
     paymentStatus: data.paymentStatus,
     paymentMethod: data.paymentMethod ?? null,
     shippingStatus: data.shippingStatus,
+    userId: data.userId ?? null,
+    userEmail: data.userEmail ?? null,
     courier: data.courier === "ncm" || data.courier === "upaya" ? data.courier : null,
     ncmTrackingId: data.ncmTrackingId ?? null,
     createdAt: data.createdAt?.toDate?.().toISOString() ?? new Date(0).toISOString(),
@@ -31,6 +33,15 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
   const doc = await adminDb.collection(COLLECTION).doc(orderId).get();
   if (!doc.exists) return null;
   return toOrder(doc as QueryDocumentSnapshot);
+}
+
+/** All orders placed by a signed-in customer, newest first. */
+export async function getOrdersByUserId(userId: string): Promise<Order[]> {
+  // Sorted in memory (not .orderBy) so no composite Firestore index is needed.
+  const snap = await adminDb.collection(COLLECTION).where("userId", "==", userId).get();
+  return snap.docs
+    .map(toOrder)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function findOrdersByPhone(phone: string): Promise<Order[]> {

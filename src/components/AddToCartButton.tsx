@@ -11,7 +11,7 @@ export default function AddToCartButton({ product, qty = 1 }: { product: Product
 
   function handleClick() {
     if (product.isOutOfStock) return;
-    addItem(product, qty);
+    if (!addItem(product, qty)) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }

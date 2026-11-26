@@ -141,3 +141,17 @@ Product documents (`products/{id}`) gain three optional fields — existing prod
 A new document `settings/hero` stores `{ imageUrl, imagePath, updatedAt }` for the homepage banner
 (Admin → Hero banner). With no image the hero uses solid `#2C3480`.
 Order items now store the **charged** unit price in `price`, plus `originalPrice` and `discountPercent` when discounted.
+
+
+## Customer sign-in (Google / Apple) and shopping history
+
+Customers must sign in before adding to the cart; orders are linked to their account (`orders/{id}.userId`, `userEmail`)
+and listed at `/account` ("My orders"). The server verifies the Firebase ID token when an order is created.
+
+**One-time Firebase setup**
+1. Firebase Console → *Authentication → Sign-in method* → enable **Google** (set a support email).
+2. *Authentication → Settings → Authorized domains* → add your live domain (e.g. `dollnepal.vercel.app`) and any custom domain.
+3. (Optional) **Apple**: needs an Apple Developer account (US$99/yr). Create a Services ID + key in Apple Developer, enable *Apple* in Firebase Authentication with those values, then set `NEXT_PUBLIC_ENABLE_APPLE_SIGNIN=true` in Vercel. Until then the Apple button stays hidden.
+
+No new environment variables are needed for Google sign-in.
+Orders placed before this feature have no `userId`, so they won't appear in any customer's history (admin and phone tracking still work).

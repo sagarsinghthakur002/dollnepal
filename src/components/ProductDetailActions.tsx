@@ -13,7 +13,7 @@ export default function ProductDetailActions({ product }: { product: Product }) 
 
   function handleAdd() {
     if (product.isOutOfStock) return;
-    addItem(product, qty);
+    if (!addItem(product, qty)) return;
     setAdded(true);
   }
 

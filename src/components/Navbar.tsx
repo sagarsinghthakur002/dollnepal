@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import InstallAppButton from "@/components/InstallAppButton";
+import AccountMenu from "@/components/auth/AccountMenu";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -93,6 +94,7 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2">
+          <AccountMenu transparent={transparent} />
           <Link
             href="/cart"
             className={`relative inline-flex min-h-11 items-center gap-1.5 rounded-full brand-gradient-bg px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105 ${

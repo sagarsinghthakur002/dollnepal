@@ -141,3 +141,20 @@ Product documents (`products/{id}`) gain three optional fields — existing prod
 A new document `settings/hero` stores `{ imageUrl, imagePath, updatedAt }` for the homepage banner
 (Admin → Hero banner). With no image the hero uses solid `#2C3480`.
 Order items now store the **charged** unit price in `price`, plus `originalPrice` and `discountPercent` when discounted.
+
+## Customer sign-in (Google) and order history
+
+Free, no Firebase and no extra packages: the site uses **Google Identity Services** (the "Sign in with Google" button).
+The server verifies Google's signed token and sets its own signed cookie (`dn_session`). Orders are linked to the customer
+(`orders/{id}.userId` = Google account id, `userEmail`) and listed at `/account`. If sign-in can't work (e.g. not configured),
+the dialog offers "Continue as guest" so shopping is never blocked.
+
+**One-time setup (free)**
+1. Google Cloud Console (console.cloud.google.com) → create/select a project → *APIs & Services → OAuth consent screen* → External → fill the app name + your email → Save.
+2. *APIs & Services → Credentials → Create credentials → OAuth client ID* → type **Web application**.
+   Under **Authorized JavaScript origins** add `https://dollnepal.vercel.app` (and `http://localhost:3000` for local testing). Leave redirect URIs empty. Create.
+3. Copy the **Client ID** (ends with `.apps.googleusercontent.com`).
+4. In Vercel → Settings → Environment Variables add:
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = the Client ID
+   - `AUTH_SECRET` = any long random text (30+ characters)
+5. Redeploy.

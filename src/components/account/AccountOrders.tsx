@@ -29,23 +29,21 @@ function formatDate(iso: string): string {
 }
 
 export default function AccountOrders() {
-  const { user, loading, openSignIn, signOut, getIdToken } = useAuth();
+  const { user, loading, openSignIn, signOut } = useAuth();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const token = await getIdToken();
-      if (!token) return;
-      const res = await fetch("/api/my-orders", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      const res = await fetch("/api/my-orders", { cache: "no-store" });
       if (!res.ok) throw new Error();
       const data = (await res.json()) as { orders: Order[] };
       setOrders(data.orders);
     } catch {
       setError("Couldn't load your orders. Please try again.");
     }
-  }, [getIdToken]);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on sign-in
@@ -66,7 +64,7 @@ export default function AccountOrders() {
       <div className="rounded-3xl bg-white px-6 py-14 text-center shadow-card ring-1 ring-black/5">
         <PackageSearch className="mx-auto text-brand-pink-500" size={36} />
         <h1 className="mt-3 font-display text-xl font-semibold text-neutral-900">Sign in to see your orders</h1>
-        <p className="mx-auto mt-1.5 max-w-xs text-sm text-neutral-500">Your shopping history is saved to your Google or Apple account.</p>
+        <p className="mx-auto mt-1.5 max-w-xs text-sm text-neutral-500">Your shopping history is saved to your Google account.</p>
         <button
           type="button"
           onClick={() => openSignIn("Sign in to see your orders and shopping history.")}
@@ -74,6 +72,12 @@ export default function AccountOrders() {
         >
           Sign in
         </button>
+        <p className="mt-4 text-xs text-neutral-400">
+          Ordered without signing in?{" "}
+          <Link href="/track" className="font-semibold text-brand-purple-600 hover:underline">
+            Track it with your order ID
+          </Link>
+        </p>
       </div>
     );
   }
@@ -85,7 +89,7 @@ export default function AccountOrders() {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold text-neutral-900">My orders</h1>
-          <p className="truncate text-sm text-neutral-500">{user.displayName || user.email}</p>
+          <p className="truncate text-sm text-neutral-500">{user.name || user.email}</p>
         </div>
         <button
           type="button"

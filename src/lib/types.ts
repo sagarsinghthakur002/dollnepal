@@ -77,6 +77,8 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   shippingStatus: ShippingStatus;
+  userId: string | null; // Firebase Auth uid of the signed-in customer (null for guest orders)
+  userEmail: string | null;
   courier: Courier | null; // assigned courier partner
   ncmTrackingId: string | null; // tracking ID for the assigned courier (field name kept for existing data)
   createdAt: string; // ISO
@@ -94,4 +96,12 @@ export interface TrackingStep {
 export interface HeroSettings {
   imageUrl: string | null; // festival / banner background; null = solid fallback colour
   imagePath: string | null; // Vercel Blob URL when uploaded (for cleanup), null for external URLs
+}
+
+/** The signed-in customer (Google account) as exposed to the browser. */
+export interface SessionUser {
+  sub: string; // stable Google account id
+  email: string | null;
+  name: string | null;
+  picture: string | null;
 }

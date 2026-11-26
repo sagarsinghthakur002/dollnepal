@@ -34,7 +34,7 @@ export default function AccountMenu({ transparent }: { transparent: boolean }) {
     );
   }
 
-  const initial = (user.displayName || user.email || "?").trim().charAt(0).toUpperCase();
+  const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
 
   return (
     <div ref={ref} className="relative">
@@ -43,11 +43,11 @@ export default function AccountMenu({ transparent }: { transparent: boolean }) {
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"
         aria-expanded={open}
-        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full ring-2 ring-white/80 shadow-soft"
+        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow-soft ring-2 ring-white/80"
       >
-        {user.photoURL ? (
+        {user.picture ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.photoURL} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+          <img src={user.picture} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center brand-gradient-bg text-base font-bold text-white">{initial}</span>
         )}
@@ -56,7 +56,7 @@ export default function AccountMenu({ transparent }: { transparent: boolean }) {
       {open && (
         <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-black/10">
           <div className="border-b border-neutral-100 px-4 py-3">
-            <p className="truncate text-sm font-semibold text-neutral-900">{user.displayName || "My account"}</p>
+            <p className="truncate text-sm font-semibold text-neutral-900">{user.name || "My account"}</p>
             {user.email && <p className="truncate text-xs text-neutral-500">{user.email}</p>}
           </div>
           <Link

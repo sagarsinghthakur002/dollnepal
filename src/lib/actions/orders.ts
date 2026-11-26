@@ -7,6 +7,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { getOrderById } from "@/lib/data/orders";
 import { sendAdminNewOrderEmail } from "@/lib/email";
+import { getSession } from "@/lib/session";
 import { getFinalPrice, normalizeDiscountPercent } from "@/lib/pricing";
 import { generateOrderId } from "@/lib/orderId";
 import { calculateShippingFee, isDeliveryRegion, totalWeightKg, type DeliveryRegion } from "@/lib/shipping";
@@ -18,6 +19,11 @@ export async function createOrderAction(
   deliveryRegion: DeliveryRegion
 ): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
   try {
+    // Signed-in customers: link the order to their account (history). Guests still work.
+    const session = await getSession().catch(() => null);
+    const userId = session?.sub ?? null;
+    const userEmail = session?.email ?? null;
+
     if (!cartItems.length) throw new Error("Your cart is empty.");
     if (!customer.name?.trim() || !customer.phone?.trim() || !customer.location?.trim()) {
       throw new Error("Name, phone and delivery location are required.");
@@ -75,6 +81,8 @@ export async function createOrderAction(
         total: subtotal + deliveryCharge,
         paymentProofUrl: null,
         paymentProofUploadedAt: null,
+        userId,
+        userEmail,
         paymentStatus: "unpaid" satisfies PaymentStatus,
         paymentMethod: null,
         shippingStatus: "processing" satisfies ShippingStatus,

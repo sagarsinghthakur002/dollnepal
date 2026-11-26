@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Info } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
+import { useAuth } from "@/components/auth/AuthContext";
 import { createOrderAction } from "@/lib/actions/orders";
 import { formatNPR } from "@/lib/currency";
 import {
@@ -21,6 +22,7 @@ const DELIVERY_NOTE =
 export default function CheckoutForm() {
   const router = useRouter();
   const { items, subtotal, clear } = useCart();
+  const { user, loading: authLoading, guest, openSignIn } = useAuth();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -28,6 +30,12 @@ export default function CheckoutForm() {
   const [region, setRegion] = useState<DeliveryRegion>("inside_valley");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Pre-fill the name from the Google account.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time prefill once the account is known
+    if (user?.name) setName((current) => current || user.name!);
+  }, [user]);
 
   const totalWeight = useMemo(() => totalWeightKg(items), [items]);
   const deliveryCharge = useMemo(() => calculateShippingFee(region, totalWeight), [region, totalWeight]);
@@ -39,6 +47,10 @@ export default function CheckoutForm() {
     setSubmitting(true);
 
     try {
+      if (!user && !guest) {
+        openSignIn("Sign in to place your order and keep it in your history.");
+        return;
+      }
       const result = await createOrderAction(items, { name, phone, location }, region);
       if (!result.ok) {
         setError(result.error);
@@ -66,6 +78,19 @@ export default function CheckoutForm() {
     <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
       <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-4 shadow-card ring-1 ring-black/5 lg:col-span-2 sm:p-8">
         {error && <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
+
+        {!authLoading && !user && !guest && (
+          <div className="flex flex-col gap-3 rounded-2xl bg-brand-cream-100 p-4 ring-1 ring-black/5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-neutral-700">Sign in with Google to place your order and see it in your history.</p>
+            <button
+              type="button"
+              onClick={() => openSignIn("Sign in to place your order and keep it in your history.")}
+              className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-full brand-gradient-bg px-5 py-2.5 text-sm font-semibold text-white sm:w-auto"
+            >
+              Sign in
+            </button>
+          </div>
+        )}
 
 
         <div>

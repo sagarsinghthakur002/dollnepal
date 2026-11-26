@@ -3,7 +3,7 @@
 import { isCourier, type Courier } from "@/lib/couriers";
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { getOrderById } from "@/lib/data/orders";
 import { sendAdminNewOrderEmail } from "@/lib/email";
@@ -15,19 +15,9 @@ import type { CartItem, OrderCustomer, PaymentStatus, ShippingStatus } from "@/l
 export async function createOrderAction(
   cartItems: CartItem[],
   customer: OrderCustomer,
-  deliveryRegion: DeliveryRegion,
-  idToken: string | null
+  deliveryRegion: DeliveryRegion
 ): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
   try {
-    // Orders belong to a signed-in customer so they appear in their shopping history.
-    if (!idToken) throw new Error("Please sign in to place your order.");
-    let decoded;
-    try {
-      decoded = await adminAuth.verifyIdToken(idToken);
-    } catch {
-      throw new Error("Your session has expired. Please sign in again.");
-    }
-
     if (!cartItems.length) throw new Error("Your cart is empty.");
     if (!customer.name?.trim() || !customer.phone?.trim() || !customer.location?.trim()) {
       throw new Error("Name, phone and delivery location are required.");
@@ -85,8 +75,6 @@ export async function createOrderAction(
         total: subtotal + deliveryCharge,
         paymentProofUrl: null,
         paymentProofUploadedAt: null,
-        userId: decoded.uid,
-        userEmail: decoded.email ?? null,
         paymentStatus: "unpaid" satisfies PaymentStatus,
         paymentMethod: null,
         shippingStatus: "processing" satisfies ShippingStatus,

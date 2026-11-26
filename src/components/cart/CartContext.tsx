@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
-import { useAuth, PENDING_CART_KEY } from "@/components/auth/AuthContext";
 import { getFinalPrice, hasDiscount } from "@/lib/pricing";
 import type { CartItem, Product } from "@/lib/types";
 
@@ -11,7 +10,7 @@ interface CartContextValue {
   items: CartItem[];
   count: number;
   subtotal: number;
-  /** Returns true if the item was added; false if it was blocked (out of stock) or sign-in is required first. */
+  /** Returns true if the item was added; false if it was blocked (out of stock). */
   addItem: (product: Product, qty?: number) => boolean;
   updateQty: (productId: string, qty: number) => void;
   removeItem: (productId: string) => void;
@@ -23,7 +22,6 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const { user, loading: authLoading, openSignIn } = useAuth();
 
   useEffect(() => {
     // Reading localStorage during render would desync server/client HTML
@@ -74,40 +72,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Adding to the cart requires a signed-in customer (so orders show up in their history).
   const addItem = useCallback(
     (product: Product, qty = 1): boolean => {
       if (product.isOutOfStock) return false;
-      if (!user) {
-        try {
-          sessionStorage.setItem(PENDING_CART_KEY, JSON.stringify({ product, qty, at: Date.now() }));
-        } catch {
-          /* ignore */
-        }
-        if (!authLoading) openSignIn("Sign in to add items to your cart and track your orders.");
-        return false;
-      }
       addItemCore(product, qty);
       return true;
     },
-    [user, authLoading, openSignIn, addItemCore]
+    [addItemCore]
   );
-
-  // After signing in, add the product the customer originally tapped "Add to Cart" on.
-  useEffect(() => {
-    if (authLoading || !user || !hydrated) return;
-    try {
-      const raw = sessionStorage.getItem(PENDING_CART_KEY);
-      if (!raw) return;
-      sessionStorage.removeItem(PENDING_CART_KEY);
-      const pending = JSON.parse(raw) as { product: Product; qty: number; at: number };
-      if (pending?.product && Date.now() - pending.at < 10 * 60 * 1000) {
-        addItemCore(pending.product, pending.qty || 1);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [user, authLoading, hydrated, addItemCore]);
 
   const updateQty = useCallback((productId: string, qty: number) => {
     setItems((prev) =>

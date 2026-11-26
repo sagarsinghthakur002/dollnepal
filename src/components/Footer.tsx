@@ -1,5 +1,6 @@
 "use client";
 
+import InstallAppButton from "@/components/InstallAppButton";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,6 +64,7 @@ export default function Footer() {
             <li><Link href="/shop?category=Combo" className="hover:text-brand-pink-300">Combos</Link></li>
             <li><Link href="/trending" className="hover:text-brand-pink-300">Trending</Link></li>
             <li><Link href="/track" className="hover:text-brand-pink-300">Track Order</Link></li>
+            <li><InstallAppButton className="hover:text-brand-pink-300" /></li>
           </ul>
         </div>
 

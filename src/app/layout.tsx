@@ -4,7 +4,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloatButton from "@/components/WhatsAppFloatButton";
 import PwaRegister from "@/components/PwaRegister";
-import { AuthProvider } from "@/components/auth/AuthContext";
 import { CartProvider } from "@/components/cart/CartContext";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -47,6 +46,8 @@ export const metadata: Metadata = {
   applicationName: "DollNepal",
   appleWebApp: { capable: true, title: "DollNepal", statusBarStyle: "default" },
   formatDetection: { telephone: false },
+  // iOS Safari / iOS home-screen apps
+  other: { "apple-mobile-web-app-capable": "yes", "mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
@@ -78,7 +79,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <AuthProvider>
         <CartProvider>
           <Navbar />
           <div className="flex-1">{children}</div>
@@ -86,7 +86,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <WhatsAppFloatButton />
           <PwaRegister />
         </CartProvider>
-        </AuthProvider>
       </body>
     </html>
   );

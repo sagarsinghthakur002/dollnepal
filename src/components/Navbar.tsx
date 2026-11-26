@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
-import AccountMenu from "@/components/auth/AccountMenu";
+import InstallAppButton from "@/components/InstallAppButton";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -93,7 +93,6 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2">
-          <AccountMenu transparent={transparent} />
           <Link
             href="/cart"
             className={`relative inline-flex min-h-11 items-center gap-1.5 rounded-full brand-gradient-bg px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105 ${
@@ -139,6 +138,12 @@ export default function Navbar() {
                 </Link>
               </li>
             ))}
+            <li>
+              <InstallAppButton
+                label="Install DollNepal app"
+                className="block w-full rounded-xl px-3 py-3 text-left text-base font-semibold text-brand-purple-600"
+              />
+            </li>
           </ul>
         </div>
       )}

@@ -77,8 +77,6 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   shippingStatus: ShippingStatus;
-  userId: string | null; // Firebase Auth uid of the customer who placed the order (null for old guest orders)
-  userEmail: string | null;
   courier: Courier | null; // assigned courier partner
   ncmTrackingId: string | null; // tracking ID for the assigned courier (field name kept for existing data)
   createdAt: string; // ISO

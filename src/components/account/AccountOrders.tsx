@@ -184,7 +184,7 @@ export default function AccountOrders() {
                         {order.paymentStatus === "unpaid" ? "Pay now" : "View order & invoice"}
                       </Link>
                       <Link
-                        href={`/track?orderId=${order.orderId}`}
+                        href={`/track?orderId=${order.orderId}&phone=${encodeURIComponent(order.customer.phone)}`}
                         className="inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50"
                       >
                         Track

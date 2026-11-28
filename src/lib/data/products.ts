@@ -1,9 +1,20 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { normalizeDiscountPercent } from "@/lib/pricing";
-import type { Product } from "@/lib/types";
+import type { Product, ProductColor } from "@/lib/types";
 import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const COLLECTION = "products";
+
+function parseColors(raw: unknown): ProductColor[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((c): ProductColor | null => {
+      if (!c || typeof c.name !== "string" || !c.name.trim()) return null;
+      const images = Array.isArray(c.images) ? c.images.filter((u: unknown): u is string => typeof u === "string") : [];
+      return { name: c.name, hex: typeof c.hex === "string" && c.hex ? c.hex : null, images };
+    })
+    .filter((c): c is ProductColor => c !== null);
+}
 
 function toProduct(doc: QueryDocumentSnapshot): Product {
   const data = doc.data();
@@ -17,6 +28,8 @@ function toProduct(doc: QueryDocumentSnapshot): Product {
     imagePath: data.imagePath ?? null,
     description: data.description ?? "",
     trending: Boolean(data.trending),
+    gallery: Array.isArray(data.gallery) ? data.gallery.filter((u: unknown): u is string => typeof u === "string") : [],
+    colors: parseColors(data.colors),
     discountPercent: normalizeDiscountPercent(data.discountPercent),
     isOutOfStock: Boolean(data.isOutOfStock),
     isHidden: Boolean(data.isHidden),

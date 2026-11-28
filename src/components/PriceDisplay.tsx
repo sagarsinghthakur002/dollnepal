@@ -18,7 +18,7 @@ export default function PriceDisplay({
 }) {
   const discounted = hasDiscount(discountPercent);
   const finalClass =
-    size === "lg" ? "text-2xl font-bold text-brand-pink-600" : "text-sm font-bold text-brand-purple-700";
+    size === "lg" ? "text-2xl font-bold text-brand-pink-600" : "text-[13px] font-bold text-brand-purple-700 sm:text-sm";
   const strikeClass = size === "lg" ? "text-base" : "text-xs";
 
   if (!discounted) {

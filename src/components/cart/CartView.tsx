@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import { useCart } from "@/components/cart/CartContext";
+import { cartItemKey, useCart } from "@/components/cart/CartContext";
 import { formatNPR } from "@/lib/currency";
 
 export default function CartView() {
@@ -29,7 +29,7 @@ export default function CartView() {
     <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
       <div className="space-y-3 lg:col-span-2">
         {items.map((item) => (
-          <div key={item.productId} className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl bg-white p-3 shadow-card ring-1 ring-black/5 sm:flex-nowrap sm:gap-4 sm:p-4">
+          <div key={cartItemKey(item)} className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl bg-white p-3 shadow-card ring-1 ring-black/5 sm:flex-nowrap sm:gap-4 sm:p-4">
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand-cream-200 sm:h-20 sm:w-20">
               <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
             </div>
@@ -38,6 +38,7 @@ export default function CartView() {
               <Link href={`/product/${item.productId}`} className="font-display text-sm font-semibold text-neutral-900 hover:text-brand-pink-600 line-clamp-2 sm:line-clamp-1">
                 {item.name}
               </Link>
+              {item.color && <p className="text-xs font-medium text-neutral-500">Colour: {item.color}</p>}
               <p className="text-sm text-neutral-500">
                 {formatNPR(item.price)} each
                 {item.originalPrice != null && item.originalPrice > item.price && (
@@ -56,7 +57,7 @@ export default function CartView() {
               <div className="flex items-center rounded-full border border-neutral-200">
                 <button
                   type="button"
-                  onClick={() => updateQty(item.productId, item.qty - 1)}
+                  onClick={() => updateQty(cartItemKey(item), item.qty - 1)}
                   className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
                   aria-label={`Decrease quantity of ${item.name}`}
                 >
@@ -65,7 +66,7 @@ export default function CartView() {
                 <span className="w-7 text-center text-sm font-semibold text-neutral-800">{item.qty}</span>
                 <button
                   type="button"
-                  onClick={() => updateQty(item.productId, item.qty + 1)}
+                  onClick={() => updateQty(cartItemKey(item), item.qty + 1)}
                   className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:text-brand-pink-600"
                   aria-label={`Increase quantity of ${item.name}`}
                 >
@@ -77,7 +78,7 @@ export default function CartView() {
 
               <button
                 type="button"
-                onClick={() => removeItem(item.productId)}
+                onClick={() => removeItem(cartItemKey(item))}
                 aria-label={`Remove ${item.name} from cart`}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-400 hover:bg-red-50 hover:text-red-600"
               >

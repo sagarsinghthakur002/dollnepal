@@ -22,7 +22,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-const BYPASS = ["/admin", "/api", "/checkout", "/order", "/cart", "/account", "/__/auth"];
+const BYPASS = ["/admin", "/api", "/checkout", "/order", "/cart"];
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;

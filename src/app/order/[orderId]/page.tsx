@@ -41,13 +41,14 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
           <article className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 sm:p-8">
             <h2 className="font-display text-lg font-semibold text-neutral-900">Items</h2>
             <ul className="mt-4 divide-y divide-neutral-100">
-              {order.items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-4 py-3">
+              {order.items.map((item, idx) => (
+                <li key={`${item.productId}-${item.color ?? ""}-${idx}`} className="flex items-center gap-4 py-3">
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand-cream-200">
                     <Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-neutral-800">{item.name}</p>
+                    {item.color && <p className="text-xs text-neutral-500">Colour: {item.color}</p>}
                     <p className="text-xs text-neutral-500">{formatNPR(item.price)} × {item.qty}</p>
                   </div>
                   <p className="text-sm font-bold text-neutral-900">{formatNPR(item.lineTotal)}</p>

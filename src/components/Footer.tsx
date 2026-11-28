@@ -4,7 +4,8 @@ import InstallAppButton from "@/components/InstallAppButton";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, Music2, Send } from "lucide-react";
+import { Mail, Phone, Music2, Send, Clock, MapPin } from "lucide-react";
+import { SITE_INFO } from "@/lib/siteInfo";
 import InstagramIcon from "@/components/icons/InstagramIcon";
 
 export default function Footer() {
@@ -21,7 +22,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-brand-pink-100 bg-neutral-950 text-neutral-300">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-6 lg:px-8">
         <div className="md:col-span-2">
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/logo.jpg" alt="DollNepal logo" width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-brand-gold-300" />
@@ -69,6 +70,18 @@ export default function Footer() {
         </div>
 
         <div>
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-white">Help</h3>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            <li><Link href="/help#how-to-order" className="hover:text-brand-pink-300">How to order</Link></li>
+            <li><Link href="/help#delivery" className="hover:text-brand-pink-300">Delivery rates</Link></li>
+            <li><Link href="/help#payment" className="hover:text-brand-pink-300">Payments</Link></li>
+            <li><Link href="/track" className="hover:text-brand-pink-300">Track my order</Link></li>
+            <li><Link href="/help#returns" className="hover:text-brand-pink-300">Returns</Link></li>
+            <li><Link href="/send-gifts-to-nepal" className="hover:text-brand-pink-300">Send gifts to Nepal</Link></li>
+          </ul>
+        </div>
+
+        <div>
           <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-white">Get in touch</h3>
           <ul className="mt-4 space-y-3 text-sm">
             <li>
@@ -81,13 +94,15 @@ export default function Footer() {
                 <Phone size={16} /> +977-9761302887
               </a>
             </li>
+            <li className="flex items-center gap-2"><Clock size={16} /> {SITE_INFO.hours}</li>
+            <li className="flex items-center gap-2"><MapPin size={16} /> {SITE_INFO.location}</li>
           </ul>
 
           <div className="mt-5 flex items-center gap-3">
-            <a href="https://www.instagram.com/dollnepal.np" aria-label="DollNepal on Instagram" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
+            <a href={SITE_INFO.instagramUrl} aria-label="DollNepal on Instagram" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
               <InstagramIcon size={18} />
             </a>
-            <a href="https://www.tiktok.com/@dollnepal.np" aria-label="DollNepal on TikTok" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
+            <a href={SITE_INFO.tiktokUrl} aria-label="DollNepal on TikTok" className="rounded-full bg-neutral-900 p-2.5 ring-1 ring-neutral-700 transition-colors hover:text-brand-pink-300">
               <Music2 size={18} />
             </a>
           </div>
@@ -98,7 +113,15 @@ export default function Footer() {
       <div className="border-t border-neutral-800">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-neutral-500 sm:flex-row sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} DollNepal. All rights reserved.</p>
-          <p>Made with 💖 in Nepal</p>
+          <div className="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payments">
+            {["eSewa", "Khalti", "Bank QR"].map((m) => (
+              <span key={m} className="rounded-md bg-neutral-900 px-2 py-1 text-[11px] font-semibold text-neutral-300 ring-1 ring-neutral-700">{m}</span>
+            ))}
+          </div>
+          <p className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-brand-pink-300">Privacy</Link>
+            <Link href="/terms" className="hover:text-brand-pink-300">Terms</Link>
+          </p>
         </div>
       </div>
     </footer>

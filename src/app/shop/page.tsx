@@ -14,12 +14,14 @@ export const metadata: Metadata = {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; stock?: string }>;
 }) {
-  const { category } = await searchParams;
+  const { category, stock } = await searchParams;
+  const inStockOnly = stock === "1";
   const active = category && ["Doll", "Bouquet", "Gifts", "Combo"].includes(category) ? category : "All";
 
-  const products = active === "All" ? await getAllProducts() : await getProductsByCategory(active);
+  const all = active === "All" ? await getAllProducts() : await getProductsByCategory(active);
+  const products = inStockOnly ? all.filter((p) => !p.isOutOfStock) : all;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -28,15 +30,15 @@ export default async function ShopPage({
           The <span className="brand-gradient-text">Shop</span>
         </h1>
         <p className="mt-2 max-w-xl text-sm text-neutral-500">
-          Add your favourites to the cart, then check out in a minute.
+          Prices in Nepali rupees. Stock updates as orders come in.
         </p>
       </header>
 
       <div className="mb-8">
-        <CategoryFilter active={active} />
+        <CategoryFilter active={active} inStockOnly={inStockOnly} />
       </div>
 
-      <ProductGrid products={products} emptyMessage="No products in this category yet." />
+      <ProductGrid products={products} emptyMessage={inStockOnly ? "Nothing in stock in this category right now." : "No products in this category yet."} />
     </main>
   );
 }

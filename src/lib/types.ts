@@ -2,6 +2,12 @@ import type { Courier } from "./couriers";
 
 export type ProductCategory = "Doll" | "Bouquet" | "Gifts" | "Combo";
 
+export interface ProductColor {
+  name: string;
+  hex: string | null; // optional swatch colour like "#ef2f87"
+  images: string[]; // photos of this colour (first one is the cover)
+}
+
 export interface Product {
   id: string; // slug
   name: string;
@@ -12,6 +18,8 @@ export interface Product {
   imagePath: string | null; // Vercel Blob URL (same as imageUrl), null for seed/local images
   description: string;
   trending: boolean;
+  gallery: string[]; // extra product photos (the main photo is `imageUrl`)
+  colors: ProductColor[]; // optional colour options, each with its own photos
   discountPercent: number; // 0-100; `price` stays the base price, final price is derived (see lib/pricing.ts)
   isOutOfStock: boolean; // shown with an "Out of Stock" badge, cannot be added to cart
   isHidden: boolean; // hidden from the public storefront, still visible in admin
@@ -24,6 +32,7 @@ export interface CartItem {
   price: number; // unit price AFTER any discount
   originalPrice?: number; // base price, present when a discount was applied
   discountPercent?: number;
+  color?: string; // chosen colour option (when the product has colours)
   weight?: number; // kg per unit (absent on carts saved before weights existed)
   image: string;
   qty: number;
@@ -35,6 +44,7 @@ export interface OrderItem {
   price: number; // unit price charged (after discount)
   originalPrice?: number; // base price at order time, when discounted
   discountPercent?: number;
+  color?: string; // chosen colour option, if any
   weight: number;
   image: string;
   qty: number;
@@ -77,8 +87,6 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   shippingStatus: ShippingStatus;
-  userId: string | null; // Firebase Auth uid of the signed-in customer (null for guest orders)
-  userEmail: string | null;
   courier: Courier | null; // assigned courier partner
   ncmTrackingId: string | null; // tracking ID for the assigned courier (field name kept for existing data)
   createdAt: string; // ISO
@@ -96,12 +104,4 @@ export interface TrackingStep {
 export interface HeroSettings {
   imageUrl: string | null; // festival / banner background; null = solid fallback colour
   imagePath: string | null; // Vercel Blob URL when uploaded (for cleanup), null for external URLs
-}
-
-/** The signed-in customer (Google account) as exposed to the browser. */
-export interface SessionUser {
-  sub: string; // stable Google account id
-  email: string | null;
-  name: string | null;
-  picture: string | null;
 }

@@ -126,9 +126,9 @@ function OrderDetail({ order }: { order: Order }) {
 
           <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">Items</h3>
           <ul className="mt-2 space-y-1 text-sm text-neutral-700">
-            {order.items.map((item) => (
-              <li key={item.productId} className="flex justify-between gap-3">
-                <span>{item.name} × {item.qty}</span>
+            {order.items.map((item, idx) => (
+              <li key={`${item.productId}-${item.color ?? ""}-${idx}`} className="flex justify-between gap-3">
+                <span>{item.name}{item.color ? ` (${item.color})` : ""} × {item.qty}</span>
                 <span className="font-medium">{formatNPR(item.lineTotal)}</span>
               </li>
             ))}

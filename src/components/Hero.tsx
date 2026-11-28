@@ -28,7 +28,7 @@ export default function Hero({ backgroundUrl }: { backgroundUrl?: string | null 
       {/* Contrast overlay: darker behind the text (left / bottom on mobile), lighter over the picture. */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/70 via-black/45 to-black/25 md:bg-gradient-to-r md:from-black/70 md:via-black/45 md:to-black/15" />
 
-      <div className="relative mx-auto grid min-h-[28rem] max-w-7xl gap-10 px-4 pb-14 pt-28 sm:px-6 md:min-h-[34rem] md:grid-cols-2 md:items-center md:pb-20 md:pt-32 lg:px-8">
+      <div className="relative mx-auto grid min-h-[28rem] max-w-7xl gap-10 px-4 pb-14 pt-36 sm:px-6 md:min-h-[34rem] md:grid-cols-2 md:items-center md:pb-20 md:pt-40 lg:px-8">
         <div className="text-white">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-brand-purple-600 shadow-card ring-1 ring-brand-purple-100">
             <Sparkles size={14} className="text-brand-gold-500" />

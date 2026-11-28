@@ -7,13 +7,14 @@ import Image from "next/image";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import InstallAppButton from "@/components/InstallAppButton";
-import AccountMenu from "@/components/auth/AccountMenu";
+import { SITE_INFO } from "@/lib/siteInfo";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
   { label: "Trending", href: "/trending" },
   { label: "Track Order", href: "/track" },
+  { label: "Help", href: "/help" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -46,6 +47,12 @@ export default function Navbar() {
           : "border-b border-brand-pink-100 bg-white/90 shadow-sm backdrop-blur-md"
       }`}
     >
+      <div className="brand-gradient-bg px-4 py-1.5 text-center text-xs font-medium text-white">
+        {SITE_INFO.announcement}
+        <Link href="/track" className="ml-2 hidden font-semibold underline underline-offset-2 sm:inline">
+          Track my order
+        </Link>
+      </div>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Primary">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
@@ -94,7 +101,6 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2">
-          <AccountMenu transparent={transparent} />
           <Link
             href="/cart"
             className={`relative inline-flex min-h-11 items-center gap-1.5 rounded-full brand-gradient-bg px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105 ${

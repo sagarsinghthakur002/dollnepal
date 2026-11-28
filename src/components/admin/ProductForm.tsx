@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { UploadCloud, ImagePlus, List } from "lucide-react";
+import { UploadCloud, ImagePlus, List, Plus, X } from "lucide-react";
 import { descriptionToEditorText, editorTextToDescription } from "@/lib/description";
 import { formatNPR } from "@/lib/currency";
 import { getFinalPrice } from "@/lib/pricing";
@@ -10,6 +10,28 @@ import type { Product, ProductCategory } from "@/lib/types";
 import type { ProductInput } from "@/lib/actions/products";
 
 const CATEGORIES: ProductCategory[] = ["Doll", "Bouquet", "Gifts", "Combo"];
+const MAX_GALLERY = 10;
+const MAX_COLORS = 12;
+const MAX_COLOR_IMAGES = 10;
+
+interface ColorDraft {
+  key: string; // stable id for React (not saved)
+  name: string;
+  hex: string; // "" = no swatch colour
+  images: string[];
+}
+
+let colorKeySeed = 0;
+const newColorKey = () => `c${Date.now()}-${colorKeySeed++}`;
+
+async function uploadOne(file: File): Promise<string> {
+  const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const blob = await upload(`products/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${safe}`, file, {
+    access: "public",
+    handleUploadUrl: "/api/upload",
+  });
+  return blob.url;
+}
 
 interface Props {
   initialProduct?: Product | null;
@@ -48,8 +70,47 @@ export default function ProductForm({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const [gallery, setGallery] = useState<string[]>(initialProduct?.gallery ?? []);
+  const [colors, setColors] = useState<ColorDraft[]>(
+    (initialProduct?.colors ?? []).map((c) => ({ key: newColorKey(), name: c.name, hex: c.hex ?? "", images: c.images }))
+  );
+  const [busyUploads, setBusyUploads] = useState(0);
+
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  /** Uploads several photos one after another; returns the URLs that succeeded. */
+  async function uploadMany(files: FileList | null, max: number): Promise<string[]> {
+    if (!files || files.length === 0 || max <= 0) return [];
+    setUploadError(null);
+    setBusyUploads((n) => n + 1);
+    const urls: string[] = [];
+    try {
+      for (const file of Array.from(files).slice(0, max)) urls.push(await uploadOne(file));
+    } catch {
+      setUploadError("One or more uploads failed. Please try again.");
+    } finally {
+      setBusyUploads((n) => n - 1);
+    }
+    return urls;
+  }
+
+  async function addGalleryPhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const urls = await uploadMany(e.target.files, MAX_GALLERY - gallery.length);
+    e.target.value = "";
+    if (urls.length) setGallery((g) => [...g, ...urls]);
+  }
+
+  async function addColorPhotos(key: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const current = colors.find((c) => c.key === key);
+    const urls = await uploadMany(e.target.files, MAX_COLOR_IMAGES - (current?.images.length ?? 0));
+    e.target.value = "";
+    if (urls.length) setColors((list) => list.map((c) => (c.key === key ? { ...c, images: [...c.images, ...urls] } : c)));
+  }
+
+  function updateColor(key: string, patch: Partial<ColorDraft>) {
+    setColors((list) => list.map((c) => (c.key === key ? { ...c, ...patch } : c)));
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -146,6 +207,17 @@ export default function ProductForm({
       return;
     }
 
+    for (const c of colors) {
+      if (!c.name.trim()) {
+        setError("Every colour needs a name (or remove the empty colour).");
+        return;
+      }
+      if (c.images.length === 0) {
+        setError(`Please add at least one photo for the colour "${c.name.trim()}".`);
+        return;
+      }
+    }
+
     const discountNum = discount === "" ? 0 : Number(discount);
     if (!Number.isFinite(discountNum) || discountNum < 0 || discountNum > 100) {
       setError("Discount must be a number between 0 and 100.");
@@ -161,6 +233,8 @@ export default function ProductForm({
         weight: weightNum,
         imageUrl,
         imagePath,
+        gallery,
+        colors: colors.map((c) => ({ name: c.name.trim(), hex: c.hex || null, images: c.images })),
         description: editorTextToDescription(description),
         trending,
         discountPercent: discountNum,
@@ -299,6 +373,91 @@ export default function ProductForm({
         {uploadError && <p className="mt-1 text-xs text-red-600">{uploadError}</p>}
       </div>
 
+      {/* ---- More photos ---- */}
+      <div>
+        <span className="mb-1 block text-xs font-semibold text-neutral-600">
+          More photos <span className="font-normal text-neutral-400">(optional, up to {MAX_GALLERY})</span>
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {gallery.map((url) => (
+            <PhotoThumb key={url} url={url} onRemove={() => setGallery((g) => g.filter((u) => u !== url))} />
+          ))}
+          {gallery.length < MAX_GALLERY && <AddPhotoButton busy={busyUploads > 0} onChange={addGalleryPhotos} />}
+        </div>
+      </div>
+
+      {/* ---- Colours ---- */}
+      <div className="rounded-2xl bg-brand-cream-100 p-4 ring-1 ring-black/5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-neutral-800">Colour options</p>
+            <p className="text-xs text-neutral-500">
+              Add a colour with its own photos. Customers pick a colour on the product page; the photo and colour go into their order.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-3">
+          {colors.map((c) => (
+            <div key={c.key} className="rounded-xl bg-white p-3 ring-1 ring-black/5">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={c.name}
+                  onChange={(e) => updateColor(c.key, { name: e.target.value })}
+                  maxLength={30}
+                  placeholder="Colour name, e.g. Pink"
+                  aria-label="Colour name"
+                  className="min-w-0 flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-brand-pink-400 focus:outline-none"
+                />
+                <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-neutral-200 px-2 py-1.5 text-xs text-neutral-500" title="Optional swatch colour">
+                  <input
+                    type="color"
+                    value={c.hex || "#ef2f87"}
+                    onChange={(e) => updateColor(c.key, { hex: e.target.value })}
+                    className="h-6 w-6 cursor-pointer border-0 bg-transparent p-0"
+                    aria-label={`Swatch colour for ${c.name || "this colour"}`}
+                  />
+                  {c.hex ? (
+                    <button type="button" onClick={() => updateColor(c.key, { hex: "" })} className="font-semibold text-neutral-500 hover:text-red-600">
+                      Clear
+                    </button>
+                  ) : (
+                    <span>Swatch</span>
+                  )}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setColors((list) => list.filter((x) => x.key !== c.key))}
+                  aria-label={`Remove colour ${c.name || ""}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {c.images.map((url) => (
+                  <PhotoThumb key={url} url={url} onRemove={() => updateColor(c.key, { images: c.images.filter((u) => u !== url) })} />
+                ))}
+                {c.images.length < MAX_COLOR_IMAGES && <AddPhotoButton busy={busyUploads > 0} onChange={(e) => addColorPhotos(c.key, e)} />}
+              </div>
+              {c.images.length === 0 && <p className="mt-2 text-xs text-amber-700">Add at least one photo for this colour.</p>}
+            </div>
+          ))}
+        </div>
+
+        {colors.length < MAX_COLORS && (
+          <button
+            type="button"
+            onClick={() => setColors((list) => [...list, { key: newColorKey(), name: "", hex: "", images: [] }])}
+            className="mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50"
+          >
+            <Plus size={15} /> Add colour
+          </button>
+        )}
+      </div>
+
       <div>
         <div className="mb-1 flex items-center justify-between">
           <label htmlFor="pf-description" className="block text-xs font-semibold text-neutral-600">
@@ -361,10 +520,10 @@ export default function ProductForm({
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
-          disabled={submitting || uploadProgress !== null}
+          disabled={submitting || uploadProgress !== null || busyUploads > 0}
           className="inline-flex items-center gap-1.5 rounded-full brand-gradient-bg px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:opacity-60"
         >
-          {submitting ? "Saving…" : submitLabel}
+          {submitting ? "Saving…" : busyUploads > 0 ? "Uploading photos…" : submitLabel}
         </button>
         <button
           type="button"
@@ -414,5 +573,36 @@ function Toggle({
         <p className="text-xs text-neutral-400">{hint}</p>
       </div>
     </div>
+  );
+}
+
+function PhotoThumb({ url, onRemove }: { url: string; onRemove: () => void }) {
+  return (
+    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand-cream-200 ring-1 ring-black/5">
+      {/* eslint-disable-next-line @next/next/no-img-element -- previewing an arbitrary storage URL */}
+      <img src={url} alt="" className="h-full w-full object-cover" />
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remove photo"
+        className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
+
+function AddPhotoButton({ busy, onChange }: { busy: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <label
+      className={`flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed border-neutral-300 text-[10px] font-semibold text-neutral-500 hover:border-brand-pink-400 hover:text-brand-pink-600 ${
+        busy ? "pointer-events-none opacity-60" : ""
+      }`}
+    >
+      <ImagePlus size={18} />
+      {busy ? "Uploading…" : "Add"}
+      <input type="file" accept="image/*" multiple onChange={onChange} className="hidden" />
+    </label>
   );
 }

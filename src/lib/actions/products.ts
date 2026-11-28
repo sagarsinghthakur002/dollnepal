@@ -6,7 +6,7 @@ import { del } from "@vercel/blob";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { normalizeDiscountPercent } from "@/lib/pricing";
-import type { ProductCategory } from "@/lib/types";
+import type { ProductCategory, ProductColor } from "@/lib/types";
 
 const CATEGORIES: ProductCategory[] = ["Doll", "Bouquet", "Gifts", "Combo"];
 
@@ -17,6 +17,8 @@ export interface ProductInput {
   weight: number;
   imageUrl: string;
   imagePath: string | null;
+  gallery: string[];
+  colors: ProductColor[];
   description: string;
   trending: boolean;
   discountPercent: number;
@@ -30,6 +32,71 @@ function slugify(name: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+const BLOB_HOST = "blob.vercel-storage.com";
+const MAX_GALLERY = 10;
+const MAX_COLORS = 12;
+const MAX_COLOR_IMAGES = 10;
+
+function isHttps(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  try {
+    return new URL(url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** Validates and cleans the extra photos + colour options. */
+function normalizeVariants(input: ProductInput): { gallery: string[]; colors: ProductColor[] } {
+  const gallery = (input.gallery ?? []).filter((u) => u && u !== input.imageUrl);
+  if (gallery.length > MAX_GALLERY) throw new Error(`You can add up to ${MAX_GALLERY} extra photos.`);
+  if (!gallery.every(isHttps)) throw new Error("Invalid photo URL.");
+
+  const rawColors = input.colors ?? [];
+  if (rawColors.length > MAX_COLORS) throw new Error(`You can add up to ${MAX_COLORS} colours.`);
+  const seen = new Set<string>();
+  const colors = rawColors.map((c) => {
+    const name = String(c.name ?? "").trim();
+    if (!name) throw new Error("Every colour needs a name.");
+    if (name.length > 30) throw new Error(`Colour name "${name}" is too long (max 30 characters).`);
+    if (seen.has(name.toLowerCase())) throw new Error(`Colour "${name}" is listed twice.`);
+    seen.add(name.toLowerCase());
+    const images = (c.images ?? []).filter(Boolean);
+    if (images.length === 0) throw new Error(`Please add at least one photo for the colour "${name}".`);
+    if (images.length > MAX_COLOR_IMAGES) throw new Error(`"${name}" can have up to ${MAX_COLOR_IMAGES} photos.`);
+    if (!images.every(isHttps)) throw new Error("Invalid photo URL.");
+    const hex = c.hex && /^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex.toLowerCase() : null;
+    return { name, hex, images };
+  });
+  return { gallery, colors };
+}
+
+/** Every uploaded (Vercel Blob) file a product document points to. */
+function collectBlobUrls(d: {
+  imageUrl?: string | null;
+  imagePath?: string | null;
+  gallery?: unknown;
+  colors?: unknown;
+}): Set<string> {
+  const urls = new Set<string>();
+  const add = (u: unknown) => {
+    if (typeof u === "string" && u.includes(BLOB_HOST)) urls.add(u);
+  };
+  add(d.imageUrl);
+  add(d.imagePath);
+  if (Array.isArray(d.gallery)) d.gallery.forEach(add);
+  if (Array.isArray(d.colors)) {
+    for (const c of d.colors as { images?: unknown }[]) {
+      if (c && Array.isArray(c.images)) c.images.forEach(add);
+    }
+  }
+  return urls;
+}
+
+async function deleteBlobs(urls: Iterable<string>) {
+  await Promise.all([...urls].map((u) => del(u).catch(() => {})));
 }
 
 function validate(input: ProductInput) {
@@ -48,6 +115,7 @@ function validate(input: ProductInput) {
     throw new Error("Discount must be a number between 0 and 100.");
   }
   if (!input.imageUrl?.trim()) throw new Error("A product image is required.");
+  normalizeVariants(input);
 }
 
 function revalidateStorefront() {
@@ -65,6 +133,7 @@ export async function createProductAction(
   try {
     await requireAdminSession();
     validate(input);
+    const variants = normalizeVariants(input);
 
     const base = slugify(input.name) || `product-${Date.now()}`;
     let id = base;
@@ -83,6 +152,8 @@ export async function createProductAction(
         weight: input.weight,
         imageUrl: input.imageUrl,
         imagePath: input.imagePath,
+        gallery: variants.gallery,
+        colors: variants.colors,
         description: input.description?.trim() ?? "",
         trending: Boolean(input.trending),
         discountPercent: normalizeDiscountPercent(input.discountPercent),
@@ -105,12 +176,13 @@ export async function updateProductAction(
   try {
     await requireAdminSession();
     validate(input);
+    const variants = normalizeVariants(input);
 
     const ref = adminDb.collection("products").doc(id);
     const existing = await ref.get();
     if (!existing.exists) throw new Error("Product not found.");
 
-    const previousImagePath = existing.data()?.imagePath as string | null | undefined;
+    const before = collectBlobUrls(existing.data() ?? {});
 
     await ref.update({
       name: input.name.trim(),
@@ -119,6 +191,8 @@ export async function updateProductAction(
       weight: input.weight,
       imageUrl: input.imageUrl,
       imagePath: input.imagePath,
+      gallery: variants.gallery,
+      colors: variants.colors,
       description: input.description?.trim() ?? "",
       trending: Boolean(input.trending),
       discountPercent: normalizeDiscountPercent(input.discountPercent),
@@ -126,10 +200,9 @@ export async function updateProductAction(
       isHidden: Boolean(input.isHidden),
     });
 
-    // If the image was replaced with a newly uploaded one, clean up the old file.
-    if (previousImagePath && previousImagePath !== input.imagePath) {
-      await del(previousImagePath).catch(() => {});
-    }
+    // Clean up uploaded files that are no longer used by this product.
+    const after = collectBlobUrls({ imageUrl: input.imageUrl, imagePath: input.imagePath, gallery: variants.gallery, colors: variants.colors });
+    await deleteBlobs([...before].filter((u) => !after.has(u)));
 
     revalidateStorefront();
     revalidatePath(`/product/${id}`);
@@ -149,12 +222,9 @@ export async function deleteProductAction(
     const existing = await ref.get();
     if (!existing.exists) throw new Error("Product not found.");
 
-    const imagePath = existing.data()?.imagePath as string | null | undefined;
+    const blobUrls = collectBlobUrls(existing.data() ?? {});
     await ref.delete();
-
-    if (imagePath) {
-      await del(imagePath).catch(() => {});
-    }
+    await deleteBlobs(blobUrls);
 
     revalidateStorefront();
     return { ok: true };

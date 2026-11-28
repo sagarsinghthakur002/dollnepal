@@ -12,25 +12,25 @@ export default function TrackForm({ defaultValue = "" }: { defaultValue?: string
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) return;
-
-    const isOrderId = /^DN-/i.test(trimmed);
-    const params = new URLSearchParams();
-    params.set(isOrderId ? "orderId" : "phone", trimmed);
-    router.push(`/track?${params.toString()}`);
+    router.push(`/track?orderId=${encodeURIComponent(trimmed)}`);
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+      <label className="sr-only" htmlFor="track-order-id">Order ID</label>
       <input
+        id="track-order-id"
         type="text"
+        required
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Order ID (DN-XXXXX) or phone number"
-        className="w-full rounded-full border border-neutral-200 px-5 py-3 text-sm focus:border-brand-pink-400 focus:outline-none"
+        placeholder="Order ID (DN-XXXXXXXXX)"
+        autoCapitalize="characters"
+        className="w-full rounded-full border border-neutral-200 px-5 py-3 text-base focus:border-brand-pink-400 focus:outline-none sm:text-sm"
       />
       <button
         type="submit"
-        className="inline-flex items-center justify-center gap-2 rounded-full brand-gradient-bg px-6 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full brand-gradient-bg px-6 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-105"
       >
         <Search size={16} />
         Track

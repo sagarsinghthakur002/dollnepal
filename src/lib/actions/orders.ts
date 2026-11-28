@@ -7,7 +7,6 @@ import { adminDb } from "@/lib/firebase/admin";
 import { requireAdminSession } from "@/lib/actions/auth";
 import { getOrderById } from "@/lib/data/orders";
 import { sendAdminNewOrderEmail } from "@/lib/email";
-import { getSession } from "@/lib/session";
 import { getFinalPrice, normalizeDiscountPercent } from "@/lib/pricing";
 import { generateOrderId } from "@/lib/orderId";
 import { calculateShippingFee, isDeliveryRegion, totalWeightKg, type DeliveryRegion } from "@/lib/shipping";
@@ -19,11 +18,6 @@ export async function createOrderAction(
   deliveryRegion: DeliveryRegion
 ): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
   try {
-    // Signed-in customers: link the order to their account (history). Guests still work.
-    const session = await getSession().catch(() => null);
-    const userId = session?.sub ?? null;
-    const userEmail = session?.email ?? null;
-
     if (!cartItems.length) throw new Error("Your cart is empty.");
     if (!customer.name?.trim() || !customer.phone?.trim() || !customer.location?.trim()) {
       throw new Error("Name, phone and delivery location are required.");
@@ -40,6 +34,16 @@ export async function createOrderAction(
         const data = doc.data()!;
         if (data.isHidden) throw new Error(`Product "${item.name}" is no longer available.`);
         if (data.isOutOfStock) throw new Error(`"${data.name as string}" is currently out of stock. Please remove it from your cart.`);
+        // Products with colour options need a valid colour; the photo shown on the order is that colour's photo.
+        const colors = Array.isArray(data.colors) ? (data.colors as { name: string; images?: string[] }[]) : [];
+        let color: string | undefined;
+        let image = data.imageUrl as string;
+        if (colors.length > 0) {
+          const picked = colors.find((c) => c.name === item.color);
+          if (!picked) throw new Error(`Please choose a colour for "${data.name as string}".`);
+          color = picked.name;
+          image = picked.images?.[0] ?? image;
+        }
         const qty = Math.max(1, Math.floor(item.qty));
         const basePrice = data.price as number;
         const discountPercent = normalizeDiscountPercent(data.discountPercent);
@@ -51,7 +55,8 @@ export async function createOrderAction(
           price: unitPrice,
           ...(discountPercent > 0 ? { originalPrice: basePrice, discountPercent } : {}),
           weight: typeof data.weight === "number" ? data.weight : 0,
-          image: data.imageUrl as string,
+          ...(color ? { color } : {}),
+          image,
           qty,
           lineTotal: unitPrice * qty,
         };
@@ -81,8 +86,6 @@ export async function createOrderAction(
         total: subtotal + deliveryCharge,
         paymentProofUrl: null,
         paymentProofUploadedAt: null,
-        userId,
-        userEmail,
         paymentStatus: "unpaid" satisfies PaymentStatus,
         paymentMethod: null,
         shippingStatus: "processing" satisfies ShippingStatus,

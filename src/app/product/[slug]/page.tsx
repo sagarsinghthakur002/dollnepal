@@ -1,16 +1,18 @@
 import { descriptionLines, descriptionPlain } from "@/lib/description";
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Truck } from "lucide-react";
 import ProductGrid from "@/components/ProductGrid";
-import ProductDetailActions from "@/components/ProductDetailActions";
+import ProductDetailClient from "@/components/ProductDetailClient";
 import PriceDisplay from "@/components/PriceDisplay";
+import { SITE_INFO } from "@/lib/siteInfo";
 import { getFinalPrice } from "@/lib/pricing";
 import { getProductById, getRelatedProducts } from "@/lib/data/products";
 
 export const dynamic = "force-dynamic";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -38,7 +40,7 @@ export default async function ProductDetailPage({ params }: Props) {
     "@type": "Product",
     name: product.name,
     description: descriptionPlain(product.description),
-    image: product.imageUrl,
+    image: [product.imageUrl, ...product.gallery],
     category: product.category,
     offers: {
       "@type": "Offer",
@@ -64,47 +66,51 @@ export default async function ProductDetailPage({ params }: Props) {
           <span className="text-neutral-700">{product.name}</span>
         </nav>
 
-        <div className="grid gap-10 md:grid-cols-2">
-          <article className="relative aspect-square overflow-hidden rounded-3xl bg-brand-cream-200 shadow-card">
-            {product.isOutOfStock && (
-              <span className="absolute right-4 top-4 z-10 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow">
-                Out of Stock
+        <ProductDetailClient
+          product={product}
+          siteUrl={SITE_URL}
+          header={
+            <>
+              <span className="inline-block rounded-full bg-brand-purple-50 px-3 py-1 text-xs font-semibold text-brand-purple-600">
+                {product.category}
               </span>
-            )}
-            <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 768px) 45vw, 90vw" className={`object-cover ${product.isOutOfStock ? "opacity-70" : ""}`} priority />
-          </article>
+              {product.trending && (
+                <span className="ml-2 inline-block rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+                  🔥 Trending
+                </span>
+              )}
 
-          <aside>
-            <span className="inline-block rounded-full bg-brand-purple-50 px-3 py-1 text-xs font-semibold text-brand-purple-600">
-              {product.category}
-            </span>
-            {product.trending && (
-              <span className="ml-2 inline-block rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
-                🔥 Trending
-              </span>
-            )}
+              <h1 className="mt-3 font-display text-3xl font-semibold text-neutral-900">{product.name}</h1>
+              <PriceDisplay price={product.price} discountPercent={product.discountPercent} size="lg" className="mt-3" />
+              {product.isOutOfStock && (
+                <p className="mt-2 text-sm font-semibold text-red-600">This item is currently out of stock.</p>
+              )}
 
-            <h1 className="mt-3 font-display text-3xl font-semibold text-neutral-900">{product.name}</h1>
-            <PriceDisplay price={product.price} discountPercent={product.discountPercent} size="lg" className="mt-3" />
-            {product.isOutOfStock && (
-              <p className="mt-2 text-sm font-semibold text-red-600">This item is currently out of stock.</p>
-            )}
-
-            {product.description && (
-              descriptionLines(product.description).length > 1 ? (
-                <ul className="mt-5 max-w-md list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-neutral-600 marker:text-brand-pink-500">
-                  {descriptionLines(product.description).map((line, i) => (
-                    <li key={i}>{line}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600">{descriptionLines(product.description)[0]}</p>
-              )
-            )}
-
-            <ProductDetailActions product={product} />
-          </aside>
-        </div>
+              {product.description &&
+                (descriptionLines(product.description).length > 1 ? (
+                  <ul className="mt-5 max-w-md list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-neutral-600 marker:text-brand-pink-500">
+                    {descriptionLines(product.description).map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600">{descriptionLines(product.description)[0]}</p>
+                ))}
+            </>
+          }
+          footer={
+            <div className="mt-6 flex gap-3 rounded-2xl bg-brand-cream-100 p-4 text-sm leading-relaxed text-neutral-600 ring-1 ring-black/5">
+              <Truck size={20} className="mt-0.5 shrink-0 text-brand-pink-500" />
+              <p>
+                Delivered across Nepal with Nepal Can Move or Upaya: usually {SITE_INFO.deliveryTime.insideValley} inside Kathmandu Valley and{" "}
+                {SITE_INFO.deliveryTime.outsideValley} elsewhere. The delivery fee shows before you pay.{" "}
+                <Link href="/help#delivery" className="font-semibold text-brand-purple-600 hover:underline">
+                  Delivery &amp; returns
+                </Link>
+              </p>
+            </div>
+          }
+        />
 
         {related.length > 0 && (
           <section aria-labelledby="related-heading" className="mt-16">

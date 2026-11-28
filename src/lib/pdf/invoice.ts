@@ -45,7 +45,7 @@ export function generateInvoicePdf(order: Order): void {
     startY: 134 + infoLines.length * 16 + 16,
     head: [["Item", "Qty", "Rate", "Amount"]],
     body: order.items.map((item) => [
-      item.name,
+      item.color ? `${item.name} (${item.color})` : item.name,
       String(item.qty),
       formatNPR(item.price),
       formatNPR(item.lineTotal),

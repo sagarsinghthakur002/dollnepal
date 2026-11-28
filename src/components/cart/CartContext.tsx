@@ -1,20 +1,24 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
-import { useAuth, PENDING_CART_KEY } from "@/components/auth/AuthContext";
 import { getFinalPrice, hasDiscount } from "@/lib/pricing";
 import type { CartItem, Product } from "@/lib/types";
 
 const STORAGE_KEY = "dollnepal_cart";
 
+/** Same product in two colours = two separate cart lines. */
+export function cartItemKey(item: { productId: string; color?: string }): string {
+  return item.color ? `${item.productId}::${item.color}` : item.productId;
+}
+
 interface CartContextValue {
   items: CartItem[];
   count: number;
   subtotal: number;
-  /** Returns true if the item was added; false if blocked (out of stock) or sign-in is needed first. */
-  addItem: (product: Product, qty?: number) => boolean;
-  updateQty: (productId: string, qty: number) => void;
-  removeItem: (productId: string) => void;
+  /** Returns true if the item was added; false if blocked (out of stock). */
+  addItem: (product: Product, qty?: number, variant?: { color: string; image: string }) => boolean;
+  updateQty: (key: string, qty: number) => void;
+  removeItem: (key: string) => void;
   clear: () => void;
 }
 
@@ -23,7 +27,6 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const { user, loading: authLoading, guest, openSignIn } = useAuth();
 
   useEffect(() => {
     // Reading localStorage during render would desync server/client HTML
@@ -49,15 +52,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const addItemCore = useCallback((product: Product, qty = 1) => {
-    if (product.isOutOfStock) return; // out-of-stock products can never enter the cart
+  const addItem = useCallback((product: Product, qty = 1, variant?: { color: string; image: string }): boolean => {
+    if (product.isOutOfStock) return false; // out-of-stock products can never enter the cart
     const discounted = hasDiscount(product.discountPercent);
+    const key = cartItemKey({ productId: product.id, color: variant?.color });
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.productId === product.id ? { ...i, qty: i.qty + qty } : i
-        );
+      if (prev.some((i) => cartItemKey(i) === key)) {
+        return prev.map((i) => (cartItemKey(i) === key ? { ...i, qty: i.qty + qty } : i));
       }
       return [
         ...prev,
@@ -66,59 +67,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           name: product.name,
           price: getFinalPrice(product.price, product.discountPercent),
           ...(discounted ? { originalPrice: product.price, discountPercent: product.discountPercent } : {}),
+          ...(variant ? { color: variant.color } : {}),
           weight: product.weight,
-          image: product.imageUrl,
+          image: variant?.image ?? product.imageUrl,
           qty,
         },
       ];
     });
+    return true;
   }, []);
 
-  // Adding to the cart asks the customer to sign in first (so orders appear in their history).
-  const addItem = useCallback(
-    (product: Product, qty = 1): boolean => {
-      if (product.isOutOfStock) return false;
-      if (!user && !guest) {
-        try {
-          sessionStorage.setItem(PENDING_CART_KEY, JSON.stringify({ product, qty, at: Date.now() }));
-        } catch {
-          /* ignore */
-        }
-        if (!authLoading) openSignIn("Sign in to add items to your cart and see your orders later.");
-        return false;
-      }
-      addItemCore(product, qty);
-      return true;
-    },
-    [user, guest, authLoading, openSignIn, addItemCore]
-  );
-
-  // After signing in (or choosing guest), add the product the customer originally tapped.
-  useEffect(() => {
-    if (authLoading || !hydrated || (!user && !guest)) return;
-    try {
-      const raw = sessionStorage.getItem(PENDING_CART_KEY);
-      if (!raw) return;
-      sessionStorage.removeItem(PENDING_CART_KEY);
-      const pending = JSON.parse(raw) as { product: Product; qty: number; at: number };
-      if (pending?.product && Date.now() - pending.at < 10 * 60 * 1000) {
-        addItemCore(pending.product, pending.qty || 1);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [user, guest, authLoading, hydrated, addItemCore]);
-
-  const updateQty = useCallback((productId: string, qty: number) => {
+  const updateQty = useCallback((key: string, qty: number) => {
     setItems((prev) =>
-      qty <= 0
-        ? prev.filter((i) => i.productId !== productId)
-        : prev.map((i) => (i.productId === productId ? { ...i, qty } : i))
+      qty <= 0 ? prev.filter((i) => cartItemKey(i) !== key) : prev.map((i) => (cartItemKey(i) === key ? { ...i, qty } : i))
     );
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((key: string) => {
+    setItems((prev) => prev.filter((i) => cartItemKey(i) !== key));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
